@@ -15,6 +15,7 @@
         <li class="nav-item"><a class="nav-link" href="/avions">Avions</a></li>
         <li class="nav-item"><a class="nav-link" href="/vols">Vols</a></li>
         <li class="nav-item"><a class="nav-link" href="/equipages">Equipages</a></li>
+              <li class="nav-item"><a class="nav-link" href="/reservation/recherche">Réserver</a></li>
       </ul>
     </div>
   </div>

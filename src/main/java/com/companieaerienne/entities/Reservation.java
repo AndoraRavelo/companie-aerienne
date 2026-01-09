@@ -22,22 +22,19 @@ public class Reservation {
     private String codeResa;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "vol_id")
-    private Vol vol;
+    @JoinColumn(name = "vol_programme_id")
+    private VolProgramme volProgramme;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "passager_id")
     private Passager passager;
 
-    @Column(length = 5)
-    private String siege;
+    @Column(name = "sieges", nullable = false)
+    private Integer sieges;
 
     @Column(name = "date_resa")
     private Instant dateResa;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal prix;
-
-    @Column(length = 20, nullable = false)
-    private String statut = "confirmee";
 }

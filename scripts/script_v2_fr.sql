@@ -1,3 +1,21 @@
+-- ==========================================================
+-- Schéma V2 (français) : distinction Trajet / Vol Programmé
+-- ==========================================================
+-- Exécution : psql -U postgres -d testa -f script_v2_fr.sql
+-- 
+-- Nomenclature (français) :
+--   trajet            = route commerciale (ex : TNR → NOS)
+--   vol_programme     = départ précis d'un trajet (date / heure)
+--   vol_avion         = table de liaison vol_programme ↔ avion
+--   vol_equipage      = table de liaison vol_programme ↔ équipage
+-- 
+-- Capacités : on additionne les capacités des avions liés à un vol_programme
+-- Réservations : nombre de sièges réservés est retranché du total disponible.
+-- ==========================================================
+
+-- =====================================
+-- 0. Nettoyage (DROP si existe déjà)
+-- =====================================
 DROP TABLE IF EXISTS vol_avion      CASCADE;
 DROP TABLE IF EXISTS vol_equipage   CASCADE;
 DROP TABLE IF EXISTS reservation    CASCADE;
@@ -94,126 +112,56 @@ CREATE TABLE reservation (
     date_resa        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     prix             NUMERIC(10,2) NOT NULL
 );
-CREATE TABLE status_vol (
-    id SERIAL PRIMARY KEY,
-    vol_programme_id INTEGER NOT NULL REFERENCES vol_programme(id),
-    libelle          VARCHAR(50) NOT NULL,         -- ex : 'créé', 'embarquement', 'annulé'
-    date_statut      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- =========================================================
--- 2. Table status_reservation  (historique d'une réservation)
--- =========================================================
-CREATE TABLE status_reservation (
-    id SERIAL PRIMARY KEY,
-    reservation_id INTEGER NOT NULL REFERENCES reservation(id),
-    libelle         VARCHAR(50) NOT NULL,
-    date_statut     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
 
 
--- =========================================================
--- SCRIPT.SQL – Données d'exemple
--- Gestion d'une compagnie aérienne
--- =========================================================
-
--- =====================
--- 1. AEROPORTS
--- =====================
+-- =====================================
+-- 3. Jeu de données minimal pour test
+-- =====================================
+-- 3.1 Aéroports
 INSERT INTO aeroport (code_iata, nom, ville, pays) VALUES
-('TNR', 'Ivato International Airport', 'Antananarivo', 'Madagascar'),
-('NOS', 'Fascene Airport', 'Nosy Be', 'Madagascar');
+('TNR', 'Ivato', 'Antananarivo', 'Madagascar'),
+('NOS', 'Fascene', 'Nosy Be', 'Madagascar');
 
--- =====================
--- 2. AVIONS
--- =====================
+-- 3.2 Avions
 INSERT INTO avion (immatriculation, modele, capacite) VALUES
 ('5R-MFA', 'ATR 72-600', 70),
-('5R-MFB', 'ATR 42-500', 48);
+('5R-MFB', 'Boeing 737-800', 160);
 
--- =====================
--- 3. ÉQUIPAGE
--- =====================
-INSERT INTO equipage (nom_complet, role, licence) VALUES
-('Rakoto Jean', 'Pilote', 'ATPL'),
-('Rabe Paul', 'Copilote', 'CPL'),
-('Rasoanaivo Marie', 'PNC', NULL),
-('Randrianina Sophie', 'PNC', NULL);
+-- 3.3 Équipages
+INSERT INTO equipage (nom_complet, role) VALUES
+('Rakoto Andry', 'pilote'),
+('Rasoanarivo Fara', 'PNC');
 
--- =====================
--- 4. PASSAGERS
--- =====================
-INSERT INTO passager (nom, prenom, email, telephone) VALUES
-('Andrianarivo', 'Lucas', 'lucas@gmail.com', '0341234567'),
-('Razanamihaja', 'Claire', 'claire@gmail.com', '0329876543');
+-- 3.4 Trajet
+INSERT INTO trajet (code_trajet, aeroport_depart_id, aeroport_arrivee_id) VALUES
+('TNR-NOS', 1, 2);
 
--- =====================
--- 5. TRAJET (TNR -> NOS)
--- =====================
-INSERT INTO trajet (code_trajet, aeroport_depart_id, aeroport_arrivee_id)
-VALUES (
-    'TNR-NOS',
-    (SELECT id FROM aeroport WHERE code_iata = 'TNR'),
-    (SELECT id FROM aeroport WHERE code_iata = 'NOS')
-);
+-- 3.5 Vols programmés (occurrences)
+INSERT INTO vol_programme (trajet_id, depart_ts, arrivee_ts) VALUES
+(1, '2026-01-12 08:00', '2026-01-12 09:30'), -- id = 1
+(1, '2026-01-12 12:00', '2026-01-12 13:30'), -- id = 2
+(1, '2026-01-13 12:00', '2026-01-13 13:30');   -- id = 3
 
--- =====================
--- 6. VOL PROGRAMMÉ
--- 12 janvier à 12h
--- =====================
-INSERT INTO vol_programme (trajet_id, depart_ts, arrivee_ts)
-VALUES (
-    (SELECT id FROM trajet WHERE code_trajet = 'TNR-NOS'),
-    '2026-01-12 12:00:00',
-    '2026-01-12 13:15:00'
-);
+-- 3.6 Affectation des avions
+INSERT INTO vol_avion (vol_programme_id, avion_id) VALUES
+(1, 1),
+(2, 2),
+(3, 1);
 
--- =====================
--- 7. AVION AFFECTÉ AU VOL
--- =====================
-INSERT INTO vol_avion (vol_programme_id, avion_id)
-VALUES (
-    1,
-    (SELECT id FROM avion WHERE immatriculation = '5R-MFA')
-);
-
--- =====================
--- 8. ÉQUIPAGE AFFECTÉ AU VOL
--- =====================
+-- 3.7 Affectation des équipages
 INSERT INTO vol_equipage (vol_programme_id, equipage_id, role_sur_vol) VALUES
-(1, 1, 'Capitaine'),
-(1, 2, 'Copilote'),
-(1, 3, 'PNC'),
-(1, 4, 'PNC');
+(1, 1, 'capitaine'),
+(1, 2, 'PNC');
 
--- =====================
--- 9. RÉSERVATION
--- 2 sièges réservés
--- =====================
-INSERT INTO reservation (code_resa, vol_programme_id, passager_id, sieges, prix)
-VALUES (
-    'AB123456',
-    1,
-    1,
-    2,
-    400000
-);
+-- 3.8 Passagers & réservations
+INSERT INTO passager (nom, prenom, email) VALUES
+('Smith', 'John', 'john.smith@example.com'),
+('Martin', 'Claire', 'claire.martin@example.com');
 
--- =====================
--- 10. HISTORIQUE STATUT DU VOL
--- =====================
-INSERT INTO status_vol (vol_programme_id, libelle) VALUES
-(1, 'créé'),
-(1, 'embarquement'),
-(1, 'terminé');
+INSERT INTO reservation (code_resa, vol_programme_id, passager_id, sieges, prix) VALUES
+('ABC001', 1, 1, 2, 100.00),
+('DEF002', 2, 2, 1, 120.00);
 
--- =====================
--- 11. HISTORIQUE STATUT DE LA RÉSERVATION
--- =====================
-INSERT INTO status_reservation (reservation_id, libelle) VALUES
-(1, 'créée'),
-(1, 'confirmée');
-
--- =========================================================
--- FIN DU SCRIPT
--- =========================================================
+-- ==========================================================
+-- Fin du script V2 (français)
+-- ==========================================================

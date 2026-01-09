@@ -1,0 +1,29 @@
+package com.companieaerienne.entities;
+
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.time.Instant;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@Entity
+@Table(name = "status_reservation")
+public class StatusReservation {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "reservation_id")
+    private Reservation reservation;
+
+    @Column(length = 50, nullable = false)
+    private String libelle; // créée, confirmée, annulée…
+
+    @Column(name = "date_statut")
+    private Instant dateStatut;
+}
