@@ -1,0 +1,31 @@
+/* Custom styles for Compagnie Aerienne */
+
+/* Navbar brand text */
+.navbar-brand span {
+  font-weight: 600;
+  font-size: 1.2rem;
+  letter-spacing: .5px;
+}
+
+/* Dark navbar override */
+.navbar-dark {
+  background: linear-gradient(90deg, #0d47a1 0%, #1976d2 50%, #2196f3 100%);
+}
+
+/* Cards on dashboard */
+.card {
+  border: none;
+  box-shadow: 0 2px 6px rgba(0,0,0,.1);
+}
+.card-title {
+  font-weight: 700;
+}
+
+/* General page background */
+body {
+  background-color: #f5f7fa;
+}
+
+footer {
+  color: #777;
+}
