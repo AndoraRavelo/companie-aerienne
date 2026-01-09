@@ -1,6 +1,9 @@
 D:\ITU\SEMESTRE_5\Mr_Baovola\companie-aerienne\src\main\java\com\companieaerienne\CompanieAerienneApplication.java
+D:\ITU\SEMESTRE_5\Mr_Baovola\companie-aerienne\src\main\java\com\companieaerienne\controllers\AvionController.java
 D:\ITU\SEMESTRE_5\Mr_Baovola\companie-aerienne\src\main\java\com\companieaerienne\controllers\BonjourController.java
+D:\ITU\SEMESTRE_5\Mr_Baovola\companie-aerienne\src\main\java\com\companieaerienne\controllers\EquipageController.java
 D:\ITU\SEMESTRE_5\Mr_Baovola\companie-aerienne\src\main\java\com\companieaerienne\controllers\HomeController.java
+D:\ITU\SEMESTRE_5\Mr_Baovola\companie-aerienne\src\main\java\com\companieaerienne\controllers\VolController.java
 D:\ITU\SEMESTRE_5\Mr_Baovola\companie-aerienne\src\main\java\com\companieaerienne\entities\Aeroport.java
 D:\ITU\SEMESTRE_5\Mr_Baovola\companie-aerienne\src\main\java\com\companieaerienne\entities\AffectationEquipage.java
 D:\ITU\SEMESTRE_5\Mr_Baovola\companie-aerienne\src\main\java\com\companieaerienne\entities\Avion.java
@@ -17,4 +20,7 @@ D:\ITU\SEMESTRE_5\Mr_Baovola\companie-aerienne\src\main\java\com\companieaerienn
 D:\ITU\SEMESTRE_5\Mr_Baovola\companie-aerienne\src\main\java\com\companieaerienne\repositories\PassagerRepository.java
 D:\ITU\SEMESTRE_5\Mr_Baovola\companie-aerienne\src\main\java\com\companieaerienne\repositories\ReservationRepository.java
 D:\ITU\SEMESTRE_5\Mr_Baovola\companie-aerienne\src\main\java\com\companieaerienne\repositories\VolRepository.java
+D:\ITU\SEMESTRE_5\Mr_Baovola\companie-aerienne\src\main\java\com\companieaerienne\services\AvionService.java
 D:\ITU\SEMESTRE_5\Mr_Baovola\companie-aerienne\src\main\java\com\companieaerienne\services\BonjourService.java
+D:\ITU\SEMESTRE_5\Mr_Baovola\companie-aerienne\src\main\java\com\companieaerienne\services\EquipageService.java
+D:\ITU\SEMESTRE_5\Mr_Baovola\companie-aerienne\src\main\java\com\companieaerienne\services\VolService.java
