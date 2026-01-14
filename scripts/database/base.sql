@@ -89,8 +89,10 @@ CREATE TABLE reservation (
 
 -- Création de la table ReservationPlace
 CREATE TABLE reservation_place (
-    id_reservation INTEGER REFERENCES reservation(id),
-    place INTEGER
+    id_reservation INTEGER NOT NULL REFERENCES reservation(id),
+    id_vol_programmation INTEGER NOT NULL REFERENCES vol_programmation(id),
+    place INTEGER NOT NULL,
+    PRIMARY KEY (id_vol_programmation, place)
 );
 
 -- Création de la table StatutReservation
