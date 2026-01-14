@@ -5,22 +5,18 @@
   <thead>
   <tr>
     <th>ID</th>
-    <th>Code vol</th>
     <th>Départ</th>
     <th>Arrivée</th>
-    <th>Date départ</th>
-    <th>Statut</th>
+    <th>Durée (h)</th>
   </tr>
   </thead>
   <tbody>
   <c:forEach items="${vols}" var="v">
     <tr>
       <td>${v.id}</td>
-      <td>${v.codeVol}</td>
-      <td>${v.aeroportDepart != null ? v.aeroportDepart.codeIata : ''}</td>
-      <td>${v.aeroportArrivee != null ? v.aeroportArrivee.codeIata : ''}</td>
-      <td>${v.dateHeureDepart}</td>
-      <td>${v.statut}</td>
+      <td>${v.aeroportDepart != null ? v.aeroportDepart.nom : ''}</td>
+      <td>${v.aeroportArrivee != null ? v.aeroportArrivee.nom : ''}</td>
+      <td>${v.duree}</td>
     </tr>
   </c:forEach>
   </tbody>

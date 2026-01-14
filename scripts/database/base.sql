@@ -47,6 +47,14 @@ CREATE TABLE vol_programmation_statut (
     date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Affectation des pilotes à une programmation de vol (plus réaliste que sur l'avion)
+CREATE TABLE vol_programmation_pilote (
+    id_vol_programmation INTEGER NOT NULL REFERENCES vol_programmation(id),
+    id_pilote INTEGER NOT NULL REFERENCES pilote(id),
+    role VARCHAR(30),
+    PRIMARY KEY (id_vol_programmation, id_pilote)
+);
+
 -- Création de la table AvionPilote
 CREATE TABLE avion_pilote (
     id_avion INTEGER REFERENCES avion(id),

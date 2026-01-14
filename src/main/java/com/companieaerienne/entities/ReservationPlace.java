@@ -10,15 +10,18 @@ import lombok.Setter;
 @NoArgsConstructor
 @Entity
 @Table(name = "reservation_place")
+@IdClass(ReservationPlaceId.class)
 public class ReservationPlace {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @ManyToOne
+    @JoinColumn(name = "id_vol_programmation")
+    private VolProgrammation volProgrammation;
+
+    @Id
+    @Column(name = "place")
+    private Integer place;
 
     @ManyToOne
     @JoinColumn(name = "id_reservation")
     private Reservation reservation;
-
-    @Column(name = "place")
-    private Integer place;
 }

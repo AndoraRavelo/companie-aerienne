@@ -6,18 +6,11 @@
       <span>Compagnie&nbsp;Aerienne</span>
     </a>
 
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
+    <!-- Sidebar toggle (visible on small screens) -->
+    <button class="btn btn-outline-light d-lg-none me-2" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Afficher le menu">
+      ☰
     </button>
 
-    <div class="collapse navbar-collapse" id="mainNavbar">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item"><a class="nav-link" href="/avions">Avions</a></li>
-        <li class="nav-item"><a class="nav-link" href="/vols">Vols</a></li>
-        <li class="nav-item"><a class="nav-link" href="/equipages">Equipages</a></li>
-              <li class="nav-item"><a class="nav-link" href="/volsprogrammes">Vols programmés</a></li>
-        <li class="nav-item"><a class="nav-link" href="/reservations">Réservations</a></li>
-      </ul>
-    </div>
+    <!-- No top nav links; all navigation is handled by the sidebar -->
   </div>
 </nav>

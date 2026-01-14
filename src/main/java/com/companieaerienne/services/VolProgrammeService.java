@@ -1,7 +1,6 @@
 package com.companieaerienne.services;
 
 import com.companieaerienne.entities.VolProgramme;
-import com.companieaerienne.repositories.ReservationRepository;
 import com.companieaerienne.repositories.VolAvionRepository;
 import com.companieaerienne.repositories.VolProgrammeRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +13,6 @@ import java.util.List;
 public class VolProgrammeService {
     private final VolProgrammeRepository volProgrammeRepository;
     private final VolAvionRepository volAvionRepository;
-    private final ReservationRepository reservationRepository;
 
     public List<VolProgramme> findAll() {
         return volProgrammeRepository.findAll();
@@ -28,7 +26,8 @@ public class VolProgrammeService {
     }
 
     public int siegesReserves(VolProgramme vp) {
-        Integer sum = reservationRepository.sumSiegesByVolProgramme(vp);
-        return sum != null ? sum : 0;
+        // Service legacy basé sur VolProgramme: la réservation est désormais gérée via VolProgrammation.
+        // Pour compatibilité transitoire, on retourne 0 ici.
+        return 0;
     }
 }
