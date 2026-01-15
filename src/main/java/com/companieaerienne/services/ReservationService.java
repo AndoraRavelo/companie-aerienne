@@ -20,7 +20,7 @@ public class ReservationService {
     private final StatusReservationRepository statusReservationRepository;
 
     @Transactional
-    public Optional<Reservation> createReservation(Integer volProgrammeId, Integer passagerId, int sieges, BigDecimal prix) {
+    public Optional<Reservation> createReservation(Integer volProgrammeId, Integer passagerId, int sieges) {
         VolProgramme vp = volProgrammeRepository.findById(volProgrammeId).orElse(null);
         Passager passager = passagerRepository.findById(passagerId).orElse(null);
         if (vp == null || passager == null) return Optional.empty();
@@ -33,7 +33,10 @@ public class ReservationService {
         res.setVolProgramme(vp);
         res.setPassager(passager);
         res.setSieges(sieges);
-        res.setPrix(prix);
+        // !! Prix : 
+        res.setPrixUnitaire(vp.getPrixUnitaire());
+        res.setPrix(res.getPrixUnitaire().multiply(BigDecimal.valueOf(sieges)));
+        // !! Prix unitaire : 
         res.setDateResa(Instant.now());
         reservationRepository.save(res);
 

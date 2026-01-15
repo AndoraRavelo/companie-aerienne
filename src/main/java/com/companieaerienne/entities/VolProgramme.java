@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Getter
@@ -26,4 +27,7 @@ public class VolProgramme {
 
     @Column(name = "arrivee_ts", nullable = false)
     private LocalDateTime arriveeTs;
+
+    @Column(name = "prix_unitaire", nullable = false , precision = 10, scale = 2)
+    private BigDecimal prixUnitaire;
 }

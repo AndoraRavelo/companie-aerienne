@@ -35,6 +35,10 @@ public class Reservation {
     @Column(name = "date_resa")
     private Instant dateResa;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(name = "prix", nullable = false, precision = 10, scale = 2)
     private BigDecimal prix;
+
+    
+    @Column(name = "prix_unitaire",  nullable = false, precision = 10, scale = 2)
+    private BigDecimal prixUnitaire;
 }

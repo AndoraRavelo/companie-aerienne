@@ -12,8 +12,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.ModelAndView;
-
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,7 +24,7 @@ public class ReservationController {
     private final com.companieaerienne.repositories.VolProgrammeRepository volProgrammeRepository;
     private final com.companieaerienne.repositories.ReservationRepository reservationRepository;
 
-    private static final BigDecimal PRICE_PER_SEAT = BigDecimal.valueOf(200_000);
+    
 
     @GetMapping("/reservation/new")
     public ModelAndView showForm(@RequestParam("vpId") Integer vpId) {
@@ -77,8 +75,7 @@ public class ReservationController {
                 .filter(v -> v.getId().equals(vpId)).findFirst().orElse(null);
         if (vp == null) return new ModelAndView("redirect:/volsprogrammes");
 
-        BigDecimal prix = PRICE_PER_SEAT.multiply(BigDecimal.valueOf(sieges));
-        Optional<Reservation> created = reservationService.createReservation(vpId, passagerId, sieges, prix);
+        Optional<Reservation> created = reservationService.createReservation(vpId, passagerId, sieges);
 
         ModelAndView mv = new ModelAndView("layout");
         if (created.isPresent()) {
