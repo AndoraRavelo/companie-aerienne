@@ -79,10 +79,50 @@ ON CONFLICT DO NOTHING;
 
 -- Scheduled flights (vol_programmation)
 INSERT INTO vol_programmation (id_vol, id_avion, date_heure) VALUES
-  ((SELECT id FROM vol LIMIT 1), (SELECT id FROM avion WHERE matricule='5R-MBA'), '2026-01-12 12:00:00'),
-  ((SELECT id FROM vol LIMIT 1), (SELECT id FROM avion WHERE matricule='5R-MBB'), '2026-01-12 18:00:00'),
-  ((SELECT id FROM vol WHERE id = (SELECT id FROM vol ORDER BY id OFFSET 1 LIMIT 1)), (SELECT id FROM avion WHERE matricule='5R-MBA'), '2026-01-13 09:00:00'),
-  ((SELECT id FROM vol WHERE id = (SELECT id FROM vol ORDER BY id OFFSET 2 LIMIT 1)), (SELECT id FROM avion WHERE matricule='5R-MBC'), '2026-01-14 07:30:00')
+  (
+    (
+      SELECT v.id
+      FROM vol v
+      WHERE v.id_aeroport_depart = (SELECT id FROM aeroport WHERE nom = 'TNR')
+        AND v.id_aeroport_arrivee = (SELECT id FROM aeroport WHERE nom = 'NOS')
+      LIMIT 1
+    ),
+    (SELECT id FROM avion WHERE matricule='5R-MBA'),
+    '2026-01-12 12:00:00'
+  ),
+  (
+    (
+      SELECT v.id
+      FROM vol v
+      WHERE v.id_aeroport_depart = (SELECT id FROM aeroport WHERE nom = 'TNR')
+        AND v.id_aeroport_arrivee = (SELECT id FROM aeroport WHERE nom = 'NOS')
+      LIMIT 1
+    ),
+    (SELECT id FROM avion WHERE matricule='5R-MBB'),
+    '2026-01-12 18:00:00'
+  ),
+  (
+    (
+      SELECT v.id
+      FROM vol v
+      WHERE v.id_aeroport_depart = (SELECT id FROM aeroport WHERE nom = 'TNR')
+        AND v.id_aeroport_arrivee = (SELECT id FROM aeroport WHERE nom = 'DIE')
+      LIMIT 1
+    ),
+    (SELECT id FROM avion WHERE matricule='5R-MBA'),
+    '2026-01-13 09:00:00'
+  ),
+  (
+    (
+      SELECT v.id
+      FROM vol v
+      WHERE v.id_aeroport_depart = (SELECT id FROM aeroport WHERE nom = 'TMM')
+        AND v.id_aeroport_arrivee = (SELECT id FROM aeroport WHERE nom = 'TNR')
+      LIMIT 1
+    ),
+    (SELECT id FROM avion WHERE matricule='5R-MBC'),
+    '2026-01-14 07:30:00'
+  )
 ON CONFLICT DO NOTHING;
 
 -- Initial status for each scheduled flight
@@ -155,3 +195,42 @@ INSERT INTO historique_reservation (id_reservation, id_statut)
 SELECT r.id, (SELECT id FROM statut_reservation WHERE nom='Confirmée')
 FROM reservation r
 ON CONFLICT DO NOTHING;
+
+-- =========================
+-- DONNÉES RÉELLES: TNR -> NOS
+-- =========================
+-- Répartition des sièges pour l'avion 5R-MBA: Eco 1..150, Business 151..180
+UPDATE classe_place
+SET place_debut = 1,
+    place_fin = 150
+WHERE id_avion = (SELECT id FROM avion WHERE matricule='5R-MBA')
+  AND id_classe = (SELECT id FROM classe WHERE nom='Economique');
+
+UPDATE classe_place
+SET place_debut = 151,
+    place_fin = 180
+WHERE id_avion = (SELECT id FROM avion WHERE matricule='5R-MBA')
+  AND id_classe = (SELECT id FROM classe WHERE nom='Business');
+
+-- Tarifs réels pour toutes les programmations du vol TNR -> NOS
+UPDATE tarif_vol tv
+SET tarif = 700000
+WHERE tv.id_classe = (SELECT id FROM classe WHERE nom='Economique')
+  AND tv.id_vol_programmation IN (
+    SELECT vp.id
+    FROM vol_programmation vp
+    JOIN vol v ON v.id = vp.id_vol
+    WHERE v.id_aeroport_depart = (SELECT id FROM aeroport WHERE nom = 'TNR')
+      AND v.id_aeroport_arrivee = (SELECT id FROM aeroport WHERE nom = 'NOS')
+  );
+
+UPDATE tarif_vol tv
+SET tarif = 1200000
+WHERE tv.id_classe = (SELECT id FROM classe WHERE nom='Business')
+  AND tv.id_vol_programmation IN (
+    SELECT vp.id
+    FROM vol_programmation vp
+    JOIN vol v ON v.id = vp.id_vol
+    WHERE v.id_aeroport_depart = (SELECT id FROM aeroport WHERE nom = 'TNR')
+      AND v.id_aeroport_arrivee = (SELECT id FROM aeroport WHERE nom = 'NOS')
+  );

@@ -3,18 +3,108 @@ body {
   background-color: #f8f9fa;
 }
 
+:root {
+  --ui-border: rgba(0,0,0,.08);
+  --ui-text: #1f2937;
+  --ui-muted: #6b7280;
+  --ui-primary: #2563eb;
+  --ui-primary-soft: rgba(37,99,235,.14);
+  --ui-primary-hover: #1d4ed8;
+  --ui-focus: rgba(37,99,235,.25);
+}
+
+/* Bootstrap overrides (buttons / forms) */
+.btn {
+  border-radius: 10px;
+  padding: .5rem .9rem;
+}
+
+.btn-primary {
+  background-color: var(--ui-primary);
+  border-color: var(--ui-primary);
+}
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: var(--ui-primary-hover);
+  border-color: var(--ui-primary-hover);
+}
+
+.btn-outline-primary {
+  color: var(--ui-primary);
+  border-color: rgba(37,99,235,.35);
+}
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+  background-color: var(--ui-primary-soft);
+  border-color: rgba(37,99,235,.55);
+  color: var(--ui-primary);
+}
+
+.btn:focus,
+.btn:focus-visible {
+  box-shadow: 0 0 0 .2rem var(--ui-focus);
+}
+
+.form-control,
+.form-select {
+  border-radius: 10px;
+  border-color: var(--ui-border);
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: rgba(37,99,235,.55);
+  box-shadow: 0 0 0 .2rem var(--ui-focus);
+}
+
 .sidebar {
   height: calc(100vh - 56px); /* minus navbar height */
   overflow-y: auto;
-  border-right: 1px solid rgba(0,0,0,.1);
+  border-right: 1px solid var(--ui-border);
+}
+
+.sidebar .sidebar-title {
+  color: var(--ui-muted);
+  font-size: .72rem;
+  letter-spacing: .08em;
 }
 
 .sidebar .nav-link {
-  color: #333;
+  color: var(--ui-text);
+  border-radius: 10px;
+  padding: .55rem .75rem;
+  display: flex;
+  align-items: center;
+  gap: .6rem;
 }
-.sidebar .nav-link.active,
+
+.sidebar .nav-link i {
+  font-size: 1.05rem;
+  width: 1.25rem;
+  text-align: center;
+  color: var(--ui-muted);
+}
+
 .sidebar .nav-link:hover {
-  color: #0d6efd;
+  background: rgba(0,0,0,.03);
+  color: var(--ui-text);
+}
+
+.sidebar .nav-link.active {
+  background: var(--ui-primary-soft);
+  color: var(--ui-primary);
+  font-weight: 600;
+}
+
+.sidebar .nav-link.active i {
+  color: var(--ui-primary);
+}
+
+.sidebar .sidebar-sep {
+  height: 1px;
+  background: var(--ui-border);
+  margin-left: .75rem;
+  margin-right: .75rem;
 }
 
 .sidebar-sticky {
@@ -27,11 +117,20 @@ main {
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  border: 1px solid var(--ui-border);
 }
 
 /* Improve tables readability */
 .table {
   background: #fff;
+}
+
+.table thead th {
+  color: var(--ui-muted);
+  font-weight: 700;
+  font-size: .85rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
 }
 
 /* Cards spacing */
