@@ -133,6 +133,65 @@ main {
   letter-spacing: .05em;
 }
 
+/* Reservation form: highlight remaining seats by class */
+.seat-detail {
+  padding-top: .25rem;
+}
+
+.seat-detail-title {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  font-weight: 700;
+  color: var(--ui-text);
+  margin-bottom: .5rem;
+}
+
+.seat-detail-badge {
+  padding: .55rem .65rem;
+  border-radius: 12px;
+}
+
+.seat-detail-class {
+  font-weight: 700;
+}
+
+.seat-detail-capacity {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--ui-text);
+}
+
+.seat-detail-label,
+.seat-detail-sep {
+  color: var(--ui-muted);
+  font-weight: 600;
+}
+
+.seat-detail-remaining {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.2rem;
+  padding: .1rem .45rem;
+  border-radius: 999px;
+  margin-left: .25rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.seat-detail-remaining-ok {
+  background: rgba(22,163,74,.12);
+  color: #166534;
+  border: 1px solid rgba(22,163,74,.25);
+}
+
+.seat-detail-remaining-full {
+  background: rgba(220,38,38,.12);
+  color: #991b1b;
+  border: 1px solid rgba(220,38,38,.25);
+}
+
 /* Cards spacing */
 .card {
   box-shadow: 0 1px 2px rgba(0,0,0,.05);

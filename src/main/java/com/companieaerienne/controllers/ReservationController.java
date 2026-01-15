@@ -229,6 +229,38 @@ public class ReservationController {
                     totalSeats += count;
                 }
 
+                Map<String, Integer> remainingSeatsByClass = new LinkedHashMap<>();
+                if (ranges != null && !ranges.isEmpty()) {
+                    Map<String, Integer> takenSeatsByClass = new LinkedHashMap<>();
+                    for (com.companieaerienne.entities.ClassePlace cp : ranges) {
+                        String className = cp.getClasse() != null ? cp.getClasse().getNom() : "(inconnu)";
+                        takenSeatsByClass.putIfAbsent(className, 0);
+                        remainingSeatsByClass.putIfAbsent(className, 0);
+                    }
+                    for (com.companieaerienne.entities.ReservationPlace rp : reservationPlaceRepository.findByVolProgrammation(selected)) {
+                        if (rp.getPlace() == null) continue;
+                        int seat = rp.getPlace();
+                        for (com.companieaerienne.entities.ClassePlace cp : ranges) {
+                            Integer startObj = cp.getPlaceDebut();
+                            Integer endObj = cp.getPlaceFin();
+                            if (startObj == null || endObj == null) continue;
+                            int start = startObj;
+                            int end = endObj;
+                            if (seat >= start && seat <= end) {
+                                String className = cp.getClasse() != null ? cp.getClasse().getNom() : "(inconnu)";
+                                takenSeatsByClass.put(className, takenSeatsByClass.getOrDefault(className, 0) + 1);
+                                break;
+                            }
+                        }
+                    }
+                    for (Map.Entry<String, Integer> e : seatCounts.entrySet()) {
+                        String className = e.getKey();
+                        int capacity = e.getValue() != null ? e.getValue() : 0;
+                        int taken = takenSeatsByClass.getOrDefault(className, 0);
+                        remainingSeatsByClass.put(className, Math.max(0, capacity - taken));
+                    }
+                }
+
                 java.math.BigDecimal maxRevenue = java.math.BigDecimal.ZERO;
                 for (com.companieaerienne.entities.TarifVol tv : tarifVolRepository.findByVolProgrammation(selected)) {
                     if (tv.getClasse() == null || tv.getTarif() == null) continue;
@@ -241,6 +273,8 @@ public class ReservationController {
                 for (com.companieaerienne.entities.Reservation r : resList) {
                     java.util.List<String> lines = new java.util.ArrayList<>();
                     java.math.BigDecimal sub = java.math.BigDecimal.ZERO;
+                    java.util.Map<String, Integer> qtyByClass = new java.util.LinkedHashMap<>();
+                    java.util.Map<String, java.math.BigDecimal> priceByClass = new java.util.LinkedHashMap<>();
                     java.util.List<com.companieaerienne.entities.ReservationPlace> places =
                             reservationPlaceRepository.findByReservation(r);
                     for (com.companieaerienne.entities.ReservationPlace rp : places) {
@@ -257,11 +291,22 @@ public class ReservationController {
                                     tarifVolRepository.findByVolProgrammationAndClasse(selected, classeForSeat);
                             if (tvOpt.isPresent()) {
                                 java.math.BigDecimal price = tvOpt.get().getTarif();
+                                String className = classeForSeat.getNom();
+                                qtyByClass.put(className, qtyByClass.getOrDefault(className, 0) + 1);
+                                priceByClass.putIfAbsent(className, price);
                                 total = total.add(price);
                                 sub = sub.add(price);
-                                lines.add(classeForSeat.getNom() + " : " + price);
                             }
                         }
+                    }
+
+                    for (java.util.Map.Entry<String, Integer> e : qtyByClass.entrySet()) {
+                        String className = e.getKey();
+                        int qty = e.getValue() != null ? e.getValue() : 0;
+                        java.math.BigDecimal price = priceByClass.get(className);
+                        if (qty <= 0 || price == null) continue;
+                        String priceText = price.stripTrailingZeros().toPlainString();
+                        lines.add(className + " : " + qty + " × " + priceText + " Ar");
                     }
                     details.put(r.getId(), lines);
                     subtotals.put(r.getId(), sub);
@@ -287,6 +332,7 @@ public class ReservationController {
                 mv.addObject("details", details);
                 mv.addObject("subtotals", subtotals);
                 mv.addObject("seatCounts", seatCounts);
+                mv.addObject("remainingSeatsByClass", remainingSeatsByClass);
                 mv.addObject("totalSeats", totalSeats);
                 mv.addObject("maxRevenue", maxRevenue);
                 mv.addObject("routeOptions", routeOptions);

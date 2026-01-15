@@ -97,7 +97,12 @@
           <div class="text-muted mb-1">Détail par classe</div>
           <div class="d-flex flex-wrap gap-2">
             <c:forEach items="${seatCounts}" var="e">
-              <span class="badge text-bg-light border">${e.key} : ${e.value}</span>
+              <span class="badge text-bg-light border">
+                ${e.key} : ${e.value}
+                <c:if test="${not empty remainingSeatsByClass}">
+                  | restants : ${remainingSeatsByClass[e.key]}
+                </c:if>
+              </span>
             </c:forEach>
           </div>
         </div>
