@@ -71,12 +71,12 @@ CREATE TABLE trajet (
 -- 2.2 Vol programmé (occurrence précise d'un trajet)
 CREATE TABLE vol_programme (
     id SERIAL PRIMARY KEY,
-    trajet_id  INTEGER NOT NULL REFERENCES trajet(id),
+    trajet_id  INTEGER NOT NULL REFERENCES trajet(id) ,
     depart_ts  TIMESTAMP NOT NULL,
     arrivee_ts TIMESTAMP NOT NULL,
     prix_unitaire NUMERIC(10,2) NOT NULL , --prix unitaire ici 
     CHECK (arrivee_ts > depart_ts)
-);
+);--- TODO  rajouter l'avon ici :  important !!!
 
 -- 2.3 Liaison vol_programme ↔ avion
 CREATE TABLE vol_avion (
@@ -104,6 +104,8 @@ CREATE TABLE reservation (
     prix_unitaire    NUMERIC(10,2) NOT NULL ,
     prix             NUMERIC(10,2) NOT NULL
 );
+
+
 
 -- 2.6 Historique statut vol
 CREATE TABLE status_vol (
