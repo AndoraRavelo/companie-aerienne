@@ -39,11 +39,26 @@
     </div>
 
     <c:if test="${not empty seatCounts}">
-      <div class="mt-3">
-        <div class="text-muted mb-1">Détail par classe</div>
+      <div class="mt-3 seat-detail">
+        <div class="seat-detail-title">Détail par classe</div>
         <div class="d-flex flex-wrap gap-2">
           <c:forEach items="${seatCounts}" var="e">
-            <span class="badge text-bg-light border">${e.key} : ${e.value}</span>
+            <c:set var="rem" value="${remainingSeatsByClass[e.key]}"/>
+            <span class="badge text-bg-light border seat-detail-badge">
+              <span class="seat-detail-class">${e.key}</span>
+              <span class="seat-detail-sep">:</span>
+              <span class="seat-detail-capacity">${e.value}</span>
+              <span class="seat-detail-sep">|</span>
+              <span class="seat-detail-label">restants</span>
+              <c:choose>
+                <c:when test="${rem == 0}">
+                  <span class="seat-detail-remaining seat-detail-remaining-full">${rem}</span>
+                </c:when>
+                <c:otherwise>
+                  <span class="seat-detail-remaining seat-detail-remaining-ok">${rem}</span>
+                </c:otherwise>
+              </c:choose>
+            </span>
           </c:forEach>
         </div>
       </div>

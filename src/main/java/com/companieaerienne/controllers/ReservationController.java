@@ -78,6 +78,38 @@ public class ReservationController {
             if (rp.getPlace() != null) takenSeats.add(rp.getPlace());
         }
 
+        Map<String, Integer> remainingSeatsByClass = new LinkedHashMap<>();
+        if (ranges != null && !ranges.isEmpty()) {
+            Map<String, Integer> takenSeatsByClass = new LinkedHashMap<>();
+            for (com.companieaerienne.entities.ClassePlace cp : ranges) {
+                String className = cp.getClasse() != null ? cp.getClasse().getNom() : "(inconnu)";
+                takenSeatsByClass.putIfAbsent(className, 0);
+                remainingSeatsByClass.putIfAbsent(className, 0);
+            }
+            for (Integer seat : takenSeats) {
+                if (seat == null) continue;
+                for (com.companieaerienne.entities.ClassePlace cp : ranges) {
+                    Integer startObj = cp.getPlaceDebut();
+                    Integer endObj = cp.getPlaceFin();
+                    if (startObj == null || endObj == null) continue;
+                    int start = startObj;
+                    int end = endObj;
+                    if (seat >= start && seat <= end) {
+                        String className = cp.getClasse() != null ? cp.getClasse().getNom() : "(inconnu)";
+                        takenSeatsByClass.put(className, takenSeatsByClass.getOrDefault(className, 0) + 1);
+                        break;
+                    }
+                }
+            }
+            for (Map.Entry<String, Integer> e : seatCounts.entrySet()) {
+                String className = e.getKey();
+                int capacity = e.getValue() != null ? e.getValue() : 0;
+                int taken = takenSeatsByClass.getOrDefault(className, 0);
+                int remaining = Math.max(0, capacity - taken);
+                remainingSeatsByClass.put(className, remaining);
+            }
+        }
+
         ModelAndView mv = new ModelAndView("layout");
         mv.addObject("pageTitle", "Réservation");
         mv.addObject("contentView", "/WEB-INF/jsp/reservations/form.jsp");
@@ -87,6 +119,7 @@ public class ReservationController {
         mv.addObject("classes", classes);
         mv.addObject("tarifs", tarifs);
         mv.addObject("seatCounts", seatCounts);
+        mv.addObject("remainingSeatsByClass", remainingSeatsByClass);
         mv.addObject("totalSeats", totalSeats);
         mv.addObject("maxRevenue", maxRevenue);
         mv.addObject("takenSeats", takenSeats);
