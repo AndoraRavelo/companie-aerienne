@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -57,6 +59,7 @@ public class ReservationService {
                     rp.setVolProgrammation(vp);
                     rp.setPlace(seat);
                     rp.setReservation(res);
+                    rp.setClasse(classe);
                     rp.setCategorieType(assigned < nombreEnfants ? enfant : adulte);
                     reservationPlaceRepository.save(rp);
                     assigned++;
@@ -64,6 +67,88 @@ public class ReservationService {
             }
             if (assigned < nombrePlaces) {
                 // rollback en cas d'impossibilité d'assigner toutes les places dans la classe
+                throw new IllegalStateException("Places insuffisantes dans la classe sélectionnée");
+            }
+        }
+
+        return Optional.of(res);
+    }
+
+    @Transactional
+    public Optional<Reservation> createReservationMulti(Integer volProgrammationId,
+                                                        Integer clientId,
+                                                        Map<Integer, Integer> placesByClasseId,
+                                                        Map<Integer, Integer> enfantsByClasseId) {
+        VolProgrammation vp = volProgrammationRepository.findById(volProgrammationId).orElse(null);
+        Client client = clientRepository.findById(clientId).orElse(null);
+        if (vp == null || client == null) return Optional.empty();
+
+        Map<Integer, Integer> safePlaces = placesByClasseId != null ? new LinkedHashMap<>(placesByClasseId) : new LinkedHashMap<>();
+        Map<Integer, Integer> safeEnfants = enfantsByClasseId != null ? new LinkedHashMap<>(enfantsByClasseId) : new LinkedHashMap<>();
+
+        int totalPlaces = 0;
+        for (Map.Entry<Integer, Integer> e : safePlaces.entrySet()) {
+            int qty = e.getValue() != null ? e.getValue() : 0;
+            if (qty < 0) return Optional.empty();
+            totalPlaces += qty;
+        }
+        if (totalPlaces <= 0) return Optional.empty();
+
+        for (Map.Entry<Integer, Integer> e : safeEnfants.entrySet()) {
+            int enfants = e.getValue() != null ? e.getValue() : 0;
+            if (enfants < 0) return Optional.empty();
+            int places = safePlaces.getOrDefault(e.getKey(), 0);
+            if (enfants > places) return Optional.empty();
+        }
+
+        CategorieType adulte = categorieTypeRepository.findByCode("ADULTE").orElse(null);
+        CategorieType enfant = categorieTypeRepository.findByCode("ENFANT").orElse(null);
+        if (adulte == null || enfant == null) return Optional.empty();
+
+        int restante = volProgrammationService.capaciteTotale(vp) - volProgrammationService.siegesReserves(vp);
+        if (totalPlaces > restante) return Optional.empty();
+
+        Reservation res = new Reservation();
+        res.setVolProgrammation(vp);
+        res.setClient(client);
+        res.setNombrePlaces(totalPlaces);
+        res.setDateResa(Instant.now());
+        reservationRepository.save(res);
+
+        for (Map.Entry<Integer, Integer> e : safePlaces.entrySet()) {
+            Integer classeId = e.getKey();
+            int qty = e.getValue() != null ? e.getValue() : 0;
+            if (qty <= 0) continue;
+
+            Classe classe = classeRepository.findById(classeId).orElse(null);
+            if (classe == null) {
+                throw new IllegalArgumentException("Classe invalide");
+            }
+
+            int nbEnfants = safeEnfants.getOrDefault(classeId, 0);
+
+            Optional<ClassePlace> cpOpt = classePlaceRepository.findByClasseAndAvion(classe, vp.getAvion());
+            if (cpOpt.isEmpty()) {
+                throw new IllegalStateException("Plage de sièges introuvable pour la classe sélectionnée");
+            }
+            ClassePlace cp = cpOpt.get();
+
+            int assigned = 0;
+            for (int seat = cp.getPlaceDebut(); seat <= cp.getPlaceFin() && assigned < qty; seat++) {
+                boolean taken = reservationPlaceRepository.existsByVolProgrammationAndPlace(vp, seat);
+                if (!taken) {
+                    ReservationPlace rp = new ReservationPlace();
+                    rp.setVolProgrammation(vp);
+                    rp.setPlace(seat);
+                    rp.setReservation(res);
+                    rp.setClasse(classe);
+                    rp.setCategorieType(assigned < nbEnfants ? enfant : adulte);
+                    reservationPlaceRepository.save(rp);
+                    assigned++;
+                }
+            }
+
+            if (assigned < qty) {
                 throw new IllegalStateException("Places insuffisantes dans la classe sélectionnée");
             }
         }

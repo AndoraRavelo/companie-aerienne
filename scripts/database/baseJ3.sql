@@ -107,6 +107,7 @@ CREATE TABLE reservation_place (
    id_reservation INTEGER NOT NULL REFERENCES reservation(id),
    id_vol_programmation INTEGER NOT NULL REFERENCES vol_programmation(id),
    place INTEGER NOT NULL,
+   id_classe INTEGER NOT NULL REFERENCES classe(id),
    id_categorie_type INTEGER NOT NULL REFERENCES categorie_type(id),
    PRIMARY KEY (id_vol_programmation, place)
 );

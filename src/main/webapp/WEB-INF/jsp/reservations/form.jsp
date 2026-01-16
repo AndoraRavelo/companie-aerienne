@@ -8,7 +8,7 @@
   </div>
   <div>
     <h1 class="h3 mb-0">Réserver un vol</h1>
-    <div class="text-muted">Choisis un client, une classe et le nombre de places.</div>
+    <div class="text-muted">Choisis un client et saisis le nombre de places (et enfants) par classe.</div>
   </div>
 </div>
 
@@ -65,8 +65,7 @@
     </c:if>
 
     <div class="mt-3 d-flex flex-wrap gap-3">
-      <div><span class="text-muted"><i class="bi bi-cash-coin me-1"></i>Tarif (par place) :</span> <span id="tarifDisplay">—</span></div>
-      <div><span class="text-muted"><i class="bi bi-receipt me-1"></i>Total :</span> <span id="totalDisplay">—</span></div>
+      <div><span class="text-muted"><i class="bi bi-receipt me-1"></i>Total estimé (tarifs adultes) :</span> <span id="totalDisplay">—</span></div>
     </div>
   </div>
 </div>
@@ -87,26 +86,48 @@
             </c:forEach>
           </select>
         </div>
+      </div>
 
-        <div class="col-12 col-md-3">
-          <label class="form-label">Classe</label>
-          <select id="classeSelect" name="classeId" class="form-select" required>
-            <c:forEach items="${classes}" var="c">
-              <option value="${c.id}">${c.nom}</option>
-            </c:forEach>
-          </select>
-        </div>
-
-        <div class="col-12 col-md-3">
-          <label class="form-label">Nombre de places</label>
-          <input id="qteInput" type="number" name="nombrePlaces" class="form-control" min="1" max="${restants}" value="1" required>
-          <div class="form-text">Maximum : ${restants}</div>
-        </div>
-
-        <div class="col-12 col-md-3">
-          <label class="form-label">Nombre d'enfants</label>
-          <input id="enfantsInput" type="number" name="nombreEnfants" class="form-control" min="0" max="1" value="0" required>
-          <div class="form-text">Doit être ≤ nombre de places.</div>
+      <div class="mt-4">
+        <h6 class="mb-2">Places par classe</h6>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Classe</th>
+                <th style="width:180px;">Places</th>
+                <th style="width:180px;">Enfants</th>
+              </tr>
+            </thead>
+            <tbody>
+              <c:forEach items="${classes}" var="c">
+                <tr>
+                  <td>${c.nom}</td>
+                  <td>
+                    <input
+                      class="form-control places-input"
+                      type="number"
+                      name="places_${c.id}"
+                      min="0"
+                      value="0"
+                      data-classe-id="${c.id}"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      class="form-control enfants-input"
+                      type="number"
+                      name="enfants_${c.id}"
+                      min="0"
+                      value="0"
+                      data-classe-id="${c.id}"
+                    />
+                    <div class="form-text">Enfants ≤ places</div>
+                  </td>
+                </tr>
+              </c:forEach>
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -128,43 +149,51 @@
   (function() {
     // Build a tarifs map: classeId -> tarif
     var tarifs = {};
-    <%-- expose tarifs from model --%>
+    // expose tarifs from model
     <c:forEach items="${tarifsAdultes}" var="t">
       tarifs['${t.classe.id}'] = '${t.tarif}';
     </c:forEach>
-
-    var cls = document.getElementById('classeSelect');
-    var qte = document.getElementById('qteInput');
-    var enfants = document.getElementById('enfantsInput');
-    var tarifEl = document.getElementById('tarifDisplay');
     var totalEl = document.getElementById('totalDisplay');
+
+    var placeInputs = document.querySelectorAll('.places-input');
+    var enfantInputs = document.querySelectorAll('.enfants-input');
 
     function fmt(amount) {
       try { return new Intl.NumberFormat('fr-FR').format(parseFloat(amount)); } catch(e) { return amount; }
     }
 
     function refresh() {
-      var classeId = cls.value;
-      var tarif = tarifs[classeId];
-      var qty = parseInt(qte.value || '0', 10);
-      var enf = parseInt(enfants.value || '0', 10);
-      if (enf > qty) {
-        enf = qty;
-        enfants.value = '' + enf;
-      }
-      enfants.max = '' + qty;
-      if (tarif) {
-        tarifEl.textContent = fmt(tarif) + ' Ar';
-        totalEl.textContent = fmt(parseFloat(tarif) * qty) + ' Ar';
+      var total = 0;
+
+      // enforce enfants <= places, and compute adult-based estimate
+      placeInputs.forEach(function(inp) {
+        var classeId = inp.getAttribute('data-classe-id');
+        var qty = parseInt(inp.value || '0', 10);
+        if (isNaN(qty) || qty < 0) qty = 0;
+
+        var enfantInp = document.querySelector('.enfants-input[data-classe-id="' + classeId + '"]');
+        var enf = enfantInp ? parseInt(enfantInp.value || '0', 10) : 0;
+        if (isNaN(enf) || enf < 0) enf = 0;
+        if (enf > qty) {
+          enf = qty;
+          if (enfantInp) enfantInp.value = '' + enf;
+        }
+
+        var tarif = tarifs[classeId];
+        if (tarif) {
+          total += parseFloat(tarif) * qty;
+        }
+      });
+
+      if (total > 0) {
+        totalEl.textContent = fmt(total) + ' Ar';
       } else {
-        tarifEl.textContent = '—';
         totalEl.textContent = '—';
       }
     }
 
-    cls.addEventListener('change', refresh);
-    qte.addEventListener('input', refresh);
-    enfants.addEventListener('input', refresh);
+    placeInputs.forEach(function(inp) { inp.addEventListener('input', refresh); });
+    enfantInputs.forEach(function(inp) { inp.addEventListener('input', refresh); });
     // init
     refresh();
   })();

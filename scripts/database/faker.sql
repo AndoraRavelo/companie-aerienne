@@ -123,6 +123,7 @@ CREATE TABLE reservation_place (
     id_reservation INTEGER NOT NULL REFERENCES reservation(id),
     id_vol_programmation INTEGER NOT NULL REFERENCES vol_programmation(id),
     place INTEGER NOT NULL,
+    id_classe INTEGER NOT NULL REFERENCES classe(id),
     id_categorie_type INTEGER NOT NULL REFERENCES categorie_type(id),
     PRIMARY KEY (id_vol_programmation, place)
 );
@@ -217,15 +218,16 @@ VALUES ('Validée'), ('Annulée');
 
 -- Réservation de test
 INSERT INTO reservation (id_vol_programmation, id_client, nombre_places)
-VALUES (1, 1, 2);
+VALUES (1, 1, 3);
 
 INSERT INTO historique_reservation (id_reservation, id_statut)
 VALUES (1, 1);
 
-INSERT INTO reservation_place (id_reservation, id_vol_programmation, place, id_categorie_type)
+INSERT INTO reservation_place (id_reservation, id_vol_programmation, place, id_classe, id_categorie_type)
 VALUES
-(1, 1, 31, (SELECT id FROM categorie_type WHERE code = 'ADULTE')),
-(1, 1, 32, (SELECT id FROM categorie_type WHERE code = 'ENFANT'));
+(1, 1, 31, 2, (SELECT id FROM categorie_type WHERE code = 'ADULTE')),
+(1, 1, 32, 2, (SELECT id FROM categorie_type WHERE code = 'ENFANT')),
+(1, 1, 81, 3, (SELECT id FROM categorie_type WHERE code = 'ADULTE'));
 
 -- ===============================
 -- FIN DU SCRIPT

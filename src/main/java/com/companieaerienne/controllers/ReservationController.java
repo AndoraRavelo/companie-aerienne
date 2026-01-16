@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -285,11 +287,14 @@ public class ReservationController {
                             reservationPlaceRepository.findByReservation(r);
                     for (com.companieaerienne.entities.ReservationPlace rp : places) {
                         // Trouver la classe correspondant à la place
-                        com.companieaerienne.entities.Classe classeForSeat = null;
-                        for (com.companieaerienne.entities.ClassePlace cp : ranges) {
-                            if (rp.getPlace() >= cp.getPlaceDebut() && rp.getPlace() <= cp.getPlaceFin()) {
-                                classeForSeat = cp.getClasse();
-                                break;
+                        com.companieaerienne.entities.Classe classeForSeat = rp.getClasse();
+                        if (classeForSeat == null) {
+                            for (com.companieaerienne.entities.ClassePlace cp : ranges) {
+                                if (cp.getPlaceDebut() == null || cp.getPlaceFin() == null) continue;
+                                if (rp.getPlace() >= cp.getPlaceDebut() && rp.getPlace() <= cp.getPlaceFin()) {
+                                    classeForSeat = cp.getClasse();
+                                    break;
+                                }
                             }
                         }
                         if (classeForSeat != null) {
@@ -367,33 +372,36 @@ public class ReservationController {
     @PostMapping("/reservation/create")
     public ModelAndView createReservation(@RequestParam Integer vpId,
                                           @RequestParam Integer clientId,
-                                          @RequestParam Integer classeId,
-                                          @RequestParam Integer nombrePlaces,
-                                          @RequestParam(defaultValue = "0") Integer nombreEnfants) {
+                                          HttpServletRequest request) {
         VolProgrammation vp = volProgrammationRepository.findById(vpId).orElse(null);
         if (vp == null) return new ModelAndView("redirect:/volsprogrammations");
 
-        // Vérifier le tarif pour la classe sélectionnée
-        com.companieaerienne.entities.Classe classe = classeRepository.findById(classeId).orElse(null);
-        if (classe == null) {
-            ModelAndView err = new ModelAndView("layout");
-            err.addObject("pageTitle", "Erreur");
-            err.addObject("contentView", "/WEB-INF/jsp/reservations/error.jsp");
-            return err;
-        }
-        java.util.Optional<com.companieaerienne.entities.TarifVol> tvAdulte = tarifVolRepository.findByVolProgrammation(vp).stream()
-                .filter(t -> t.getClasse() != null && t.getClasse().getId() != null && t.getClasse().getId().equals(classeId))
-                .filter(t -> t.getCategorieType() != null && t.getCategorieType().getCode() != null)
-                .filter(t -> "ADULTE".equalsIgnoreCase(t.getCategorieType().getCode()))
-                .findFirst();
-        if (tvAdulte.isEmpty()) {
-            ModelAndView err = new ModelAndView("layout");
-            err.addObject("pageTitle", "Tarif indisponible");
-            err.addObject("contentView", "/WEB-INF/jsp/reservations/error.jsp");
-            return err;
+        java.util.Map<Integer, Integer> placesByClasse = new java.util.LinkedHashMap<>();
+        java.util.Map<Integer, Integer> enfantsByClasse = new java.util.LinkedHashMap<>();
+        java.util.Map<String, String[]> params = request.getParameterMap();
+        for (java.util.Map.Entry<String, String[]> e : params.entrySet()) {
+            String key = e.getKey();
+            String value = (e.getValue() != null && e.getValue().length > 0) ? e.getValue()[0] : null;
+            if (value == null) continue;
+            value = value.trim();
+            if (value.isBlank()) continue;
+            try {
+                if (key.startsWith("places_")) {
+                    Integer classeId = Integer.parseInt(key.substring("places_".length()));
+                    Integer qty = Integer.parseInt(value);
+                    placesByClasse.put(classeId, qty);
+                }
+                if (key.startsWith("enfants_")) {
+                    Integer classeId = Integer.parseInt(key.substring("enfants_".length()));
+                    Integer qty = Integer.parseInt(value);
+                    enfantsByClasse.put(classeId, qty);
+                }
+            } catch (Exception ignored) {
+                // ignore invalid inputs
+            }
         }
 
-        Optional<Reservation> created = reservationService.createReservation(vpId, clientId, classeId, nombrePlaces, nombreEnfants);
+        Optional<Reservation> created = reservationService.createReservationMulti(vpId, clientId, placesByClasse, enfantsByClasse);
 
         ModelAndView mv = new ModelAndView("layout");
         if (created.isPresent()) {
@@ -408,12 +416,14 @@ public class ReservationController {
             java.util.List<com.companieaerienne.entities.ClassePlace> ranges = classePlaceRepository.findByAvion(vp.getAvion());
             for (com.companieaerienne.entities.ReservationPlace rp : places) {
                 if (rp.getPlace() == null || rp.getCategorieType() == null) continue;
-                com.companieaerienne.entities.Classe classeForSeat = null;
-                for (com.companieaerienne.entities.ClassePlace cp : ranges) {
-                    if (cp.getPlaceDebut() == null || cp.getPlaceFin() == null) continue;
-                    if (rp.getPlace() >= cp.getPlaceDebut() && rp.getPlace() <= cp.getPlaceFin()) {
-                        classeForSeat = cp.getClasse();
-                        break;
+                com.companieaerienne.entities.Classe classeForSeat = rp.getClasse();
+                if (classeForSeat == null) {
+                    for (com.companieaerienne.entities.ClassePlace cp : ranges) {
+                        if (cp.getPlaceDebut() == null || cp.getPlaceFin() == null) continue;
+                        if (rp.getPlace() >= cp.getPlaceDebut() && rp.getPlace() <= cp.getPlaceFin()) {
+                            classeForSeat = cp.getClasse();
+                            break;
+                        }
                     }
                 }
                 if (classeForSeat == null) continue;
