@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -20,4 +22,10 @@ public class CategorieType {
 
     @Column(name = "nom", length = 50, nullable = false)
     private String nom;
+
+    @Column(name = "base_code", length = 30)
+    private String baseCode;
+
+    @Column(name = "coefficient", precision = 10, scale = 4)
+    private BigDecimal coefficient;
 }

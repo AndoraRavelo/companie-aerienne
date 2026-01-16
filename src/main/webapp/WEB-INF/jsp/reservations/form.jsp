@@ -99,6 +99,7 @@
                 <th>Classe</th>
                 <th style="width:180px;">Places</th>
                 <th style="width:180px;">Enfants</th>
+                <th style="width:180px;">Bébés</th>
               </tr>
             </thead>
             <tbody>
@@ -125,6 +126,17 @@
                       data-classe-id="${c.id}"
                     />
                     <div class="form-text">Enfants ≤ places</div>
+                  </td>
+                  <td>
+                    <input
+                      class="form-control bebes-input"
+                      type="number"
+                      name="bebes_${c.id}"
+                      min="0"
+                      value="0"
+                      data-classe-id="${c.id}"
+                    />
+                    <div class="form-text">Bébés (siège) ≤ places</div>
                   </td>
                 </tr>
               </c:forEach>
@@ -159,6 +171,7 @@
 
     var placeInputs = document.querySelectorAll('.places-input');
     var enfantInputs = document.querySelectorAll('.enfants-input');
+    var bebeInputs = document.querySelectorAll('.bebes-input');
 
     function fmt(amount) {
       try { return new Intl.NumberFormat('fr-FR').format(parseFloat(amount)); } catch(e) { return amount; }
@@ -167,7 +180,7 @@
     function refresh() {
       var total = 0;
 
-      // enforce enfants <= places, and compute adult-based estimate
+      // enforce enfants + bebes <= places, and compute adult-based estimate
       placeInputs.forEach(function(inp) {
         var classeId = inp.getAttribute('data-classe-id');
         var qty = parseInt(inp.value || '0', 10);
@@ -176,9 +189,21 @@
         var enfantInp = document.querySelector('.enfants-input[data-classe-id="' + classeId + '"]');
         var enf = enfantInp ? parseInt(enfantInp.value || '0', 10) : 0;
         if (isNaN(enf) || enf < 0) enf = 0;
-        if (enf > qty) {
-          enf = qty;
+        var bebeInp = document.querySelector('.bebes-input[data-classe-id="' + classeId + '"]');
+        var beb = bebeInp ? parseInt(bebeInp.value || '0', 10) : 0;
+        if (isNaN(beb) || beb < 0) beb = 0;
+
+        if (enf + beb > qty) {
+          // priorité: on réduit d'abord les bébés, puis les enfants
+          var overflow = (enf + beb) - qty;
+          var reduceB = Math.min(beb, overflow);
+          beb = beb - reduceB;
+          overflow = overflow - reduceB;
+          if (overflow > 0) {
+            enf = Math.max(0, enf - overflow);
+          }
           if (enfantInp) enfantInp.value = '' + enf;
+          if (bebeInp) bebeInp.value = '' + beb;
         }
 
         var tarif = tarifs[classeId];
@@ -196,6 +221,7 @@
 
     placeInputs.forEach(function(inp) { inp.addEventListener('input', refresh); });
     enfantInputs.forEach(function(inp) { inp.addEventListener('input', refresh); });
+    bebeInputs.forEach(function(inp) { inp.addEventListener('input', refresh); });
     // init
     refresh();
   })();

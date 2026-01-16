@@ -82,7 +82,9 @@ CREATE TABLE classe (
 CREATE TABLE categorie_type (
    id SERIAL PRIMARY KEY,
    code VARCHAR(30) NOT NULL UNIQUE,
-   nom VARCHAR(50) NOT NULL
+   nom VARCHAR(50) NOT NULL,
+   base_code VARCHAR(30),
+   coefficient DECIMAL(10,4)
 );
 
 -- Création de la table ClassePlace (définit les plages de sièges par classe et par avion)

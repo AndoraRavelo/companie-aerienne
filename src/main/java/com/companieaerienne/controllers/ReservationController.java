@@ -38,6 +38,36 @@ public class ReservationController {
     private final com.companieaerienne.repositories.TarifVolRepository tarifVolRepository;
     private final com.companieaerienne.repositories.ClasseRepository classeRepository;
     private final com.companieaerienne.repositories.ReservationPlaceRepository reservationPlaceRepository;
+    private final com.companieaerienne.repositories.CategorieTypeRepository categorieTypeRepository;
+
+    private java.math.BigDecimal tarifAvecFallback(VolProgrammation vp,
+                                                  com.companieaerienne.entities.Classe classe,
+                                                  com.companieaerienne.entities.CategorieType categorieType) {
+        if (vp == null || classe == null || categorieType == null) return java.math.BigDecimal.ZERO;
+
+        java.util.Optional<com.companieaerienne.entities.TarifVol> tvOpt =
+                tarifVolRepository.findByVolProgrammationAndClasseAndCategorieType(vp, classe, categorieType);
+        if (tvOpt.isPresent() && tvOpt.get().getTarif() != null) {
+            return tvOpt.get().getTarif();
+        }
+
+        String baseCode = categorieType.getBaseCode();
+        java.math.BigDecimal coef = categorieType.getCoefficient();
+        if (baseCode == null || baseCode.isBlank() || coef == null) {
+            return java.math.BigDecimal.ZERO;
+        }
+
+        com.companieaerienne.entities.CategorieType base = categorieTypeRepository.findByCode(baseCode.trim()).orElse(null);
+        if (base == null) return java.math.BigDecimal.ZERO;
+
+        java.util.Optional<com.companieaerienne.entities.TarifVol> baseTvOpt =
+                tarifVolRepository.findByVolProgrammationAndClasseAndCategorieType(vp, classe, base);
+        if (baseTvOpt.isPresent() && baseTvOpt.get().getTarif() != null) {
+            return baseTvOpt.get().getTarif().multiply(coef);
+        }
+
+        return java.math.BigDecimal.ZERO;
+    }
 
     @GetMapping("/reservation/new")
     public ModelAndView showForm(@RequestParam("vpId") Integer vpId) {
@@ -283,6 +313,7 @@ public class ReservationController {
                     java.math.BigDecimal sub = java.math.BigDecimal.ZERO;
                     java.util.Map<String, Integer> qtyByClass = new java.util.LinkedHashMap<>();
                     java.util.Map<String, java.math.BigDecimal> priceByClass = new java.util.LinkedHashMap<>();
+                    java.util.Map<String, String> discountInfoByClass = new java.util.LinkedHashMap<>();
                     java.util.List<com.companieaerienne.entities.ReservationPlace> places =
                             reservationPlaceRepository.findByReservation(r);
                     for (com.companieaerienne.entities.ReservationPlace rp : places) {
@@ -299,13 +330,38 @@ public class ReservationController {
                         }
                         if (classeForSeat != null) {
                             if (rp.getCategorieType() == null) continue;
+
+                            java.math.BigDecimal price = null;
+                            String discountInfo = null;
+
                             java.util.Optional<com.companieaerienne.entities.TarifVol> tvOpt =
                                     tarifVolRepository.findByVolProgrammationAndClasseAndCategorieType(selected, classeForSeat, rp.getCategorieType());
-                            if (tvOpt.isPresent()) {
-                                java.math.BigDecimal price = tvOpt.get().getTarif();
+                            if (tvOpt.isPresent() && tvOpt.get().getTarif() != null) {
+                                price = tvOpt.get().getTarif();
+                            } else {
+                                // fallback: tarif dérivé via categorie_type.base_code + coefficient
+                                String baseCode = rp.getCategorieType().getBaseCode();
+                                java.math.BigDecimal coef = rp.getCategorieType().getCoefficient();
+                                if (baseCode != null && !baseCode.isBlank() && coef != null) {
+                                    com.companieaerienne.entities.CategorieType base =
+                                            categorieTypeRepository.findByCode(baseCode.trim()).orElse(null);
+                                    if (base != null) {
+                                        java.util.Optional<com.companieaerienne.entities.TarifVol> baseTvOpt =
+                                                tarifVolRepository.findByVolProgrammationAndClasseAndCategorieType(selected, classeForSeat, base);
+                                        if (baseTvOpt.isPresent() && baseTvOpt.get().getTarif() != null) {
+                                            price = baseTvOpt.get().getTarif().multiply(coef);
+                                            java.math.BigDecimal pct = coef.multiply(java.math.BigDecimal.valueOf(100));
+                                            discountInfo = pct.stripTrailingZeros().toPlainString() + "% de " + baseCode.trim();
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (price != null) {
                                 String className = classeForSeat.getNom() + " (" + rp.getCategorieType().getCode() + ")";
                                 qtyByClass.put(className, qtyByClass.getOrDefault(className, 0) + 1);
                                 priceByClass.putIfAbsent(className, price);
+                                if (discountInfo != null) discountInfoByClass.putIfAbsent(className, discountInfo);
                                 total = total.add(price);
                                 sub = sub.add(price);
                             }
@@ -318,7 +374,8 @@ public class ReservationController {
                         java.math.BigDecimal price = priceByClass.get(className);
                         if (qty <= 0 || price == null) continue;
                         String priceText = price.stripTrailingZeros().toPlainString();
-                        lines.add(className + " : " + qty + " × " + priceText + " Ar");
+                        String discountInfo = discountInfoByClass.get(className);
+                        lines.add(className + " : " + qty + " × " + priceText + " Ar" + (discountInfo != null ? " (" + discountInfo + ")" : ""));
                     }
                     details.put(r.getId(), lines);
                     subtotals.put(r.getId(), sub);
@@ -378,6 +435,7 @@ public class ReservationController {
 
         java.util.Map<Integer, Integer> placesByClasse = new java.util.LinkedHashMap<>();
         java.util.Map<Integer, Integer> enfantsByClasse = new java.util.LinkedHashMap<>();
+        java.util.Map<Integer, Integer> bebesByClasse = new java.util.LinkedHashMap<>();
         java.util.Map<String, String[]> params = request.getParameterMap();
         for (java.util.Map.Entry<String, String[]> e : params.entrySet()) {
             String key = e.getKey();
@@ -396,12 +454,42 @@ public class ReservationController {
                     Integer qty = Integer.parseInt(value);
                     enfantsByClasse.put(classeId, qty);
                 }
+                if (key.startsWith("bebes_")) {
+                    Integer classeId = Integer.parseInt(key.substring("bebes_".length()));
+                    Integer qty = Integer.parseInt(value);
+                    bebesByClasse.put(classeId, qty);
+                }
             } catch (Exception ignored) {
                 // ignore invalid inputs
             }
         }
 
-        Optional<Reservation> created = reservationService.createReservationMulti(vpId, clientId, placesByClasse, enfantsByClasse);
+        java.util.Map<Integer, java.util.Map<String, Integer>> catsByClasse = new java.util.LinkedHashMap<>();
+        for (java.util.Map.Entry<Integer, Integer> e : placesByClasse.entrySet()) {
+            Integer classeId = e.getKey();
+            int places = e.getValue() != null ? e.getValue() : 0;
+            int enfants = enfantsByClasse.getOrDefault(classeId, 0);
+            int bebes = bebesByClasse.getOrDefault(classeId, 0);
+
+            if (enfants < 0 || bebes < 0) {
+                places = -1;
+            }
+            if (places < 0 || enfants + bebes > places) {
+                // invalide
+                catsByClasse.clear();
+                break;
+            }
+
+            java.util.Map<String, Integer> perClasse = new java.util.LinkedHashMap<>();
+            if (enfants > 0) perClasse.put("ENFANT", enfants);
+            if (bebes > 0) perClasse.put("BEBE", bebes);
+            // ADULTE implicite dans le service
+            catsByClasse.put(classeId, perClasse);
+        }
+
+        Optional<Reservation> created = catsByClasse.isEmpty()
+                ? java.util.Optional.empty()
+                : reservationService.createReservationMultiWithCategories(vpId, clientId, placesByClasse, catsByClasse);
 
         ModelAndView mv = new ModelAndView("layout");
         if (created.isPresent()) {
@@ -427,11 +515,7 @@ public class ReservationController {
                     }
                 }
                 if (classeForSeat == null) continue;
-                java.util.Optional<com.companieaerienne.entities.TarifVol> tvOpt =
-                        tarifVolRepository.findByVolProgrammationAndClasseAndCategorieType(vp, classeForSeat, rp.getCategorieType());
-                if (tvOpt.isPresent() && tvOpt.get().getTarif() != null) {
-                    computedTotal = computedTotal.add(tvOpt.get().getTarif());
-                }
+                computedTotal = computedTotal.add(tarifAvecFallback(vp, classeForSeat, rp.getCategorieType()));
             }
             mv.addObject("total", computedTotal);
         } else {

@@ -96,7 +96,9 @@ CREATE TABLE client (
 CREATE TABLE categorie_type (
     id SERIAL PRIMARY KEY,
     code VARCHAR(30) NOT NULL UNIQUE,
-    nom VARCHAR(50) NOT NULL
+    nom VARCHAR(50) NOT NULL,
+    base_code VARCHAR(30),
+    coefficient DECIMAL(10,4)
 );
 
 CREATE TABLE classe (
@@ -160,9 +162,10 @@ INSERT INTO classe (nom) VALUES
 ('Premium');
 
 -- Catégories de passagers
-INSERT INTO categorie_type (code, nom) VALUES
-('ADULTE', 'Adulte'),
-('ENFANT', 'Enfant');
+INSERT INTO categorie_type (code, nom, base_code, coefficient) VALUES
+('ADULTE', 'Adulte', NULL, NULL),
+('ENFANT', 'Enfant', NULL, NULL),
+('BEBE', 'Bébé', 'ADULTE', 0.10);
 
 -- Avion (120 places)
 INSERT INTO avion (matricule, capacite)
