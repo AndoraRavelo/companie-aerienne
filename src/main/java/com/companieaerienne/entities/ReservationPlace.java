@@ -24,4 +24,8 @@ public class ReservationPlace {
     @ManyToOne
     @JoinColumn(name = "id_reservation")
     private Reservation reservation;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "id_categorie_type")
+    private CategorieType categorieType;
 }

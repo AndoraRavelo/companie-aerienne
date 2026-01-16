@@ -10,6 +10,7 @@
 /home/tomefy/Documents/prog/companie-aerienne/src/main/java/com/companieaerienne/entities/AffectationEquipage.java
 /home/tomefy/Documents/prog/companie-aerienne/src/main/java/com/companieaerienne/entities/Avion.java
 /home/tomefy/Documents/prog/companie-aerienne/src/main/java/com/companieaerienne/entities/Bonjour.java
+/home/tomefy/Documents/prog/companie-aerienne/src/main/java/com/companieaerienne/entities/CategorieType.java
 /home/tomefy/Documents/prog/companie-aerienne/src/main/java/com/companieaerienne/entities/Classe.java
 /home/tomefy/Documents/prog/companie-aerienne/src/main/java/com/companieaerienne/entities/ClassePlace.java
 /home/tomefy/Documents/prog/companie-aerienne/src/main/java/com/companieaerienne/entities/ClassePlaceId.java
@@ -35,6 +36,7 @@
 /home/tomefy/Documents/prog/companie-aerienne/src/main/java/com/companieaerienne/repositories/AffectationEquipageRepository.java
 /home/tomefy/Documents/prog/companie-aerienne/src/main/java/com/companieaerienne/repositories/AvionRepository.java
 /home/tomefy/Documents/prog/companie-aerienne/src/main/java/com/companieaerienne/repositories/BonjourRepository.java
+/home/tomefy/Documents/prog/companie-aerienne/src/main/java/com/companieaerienne/repositories/CategorieTypeRepository.java
 /home/tomefy/Documents/prog/companie-aerienne/src/main/java/com/companieaerienne/repositories/ClassePlaceRepository.java
 /home/tomefy/Documents/prog/companie-aerienne/src/main/java/com/companieaerienne/repositories/ClasseRepository.java
 /home/tomefy/Documents/prog/companie-aerienne/src/main/java/com/companieaerienne/repositories/ClientRepository.java

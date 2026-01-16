@@ -10,7 +10,6 @@ reservation,
 tarif_vol,
 classe_place,
 classe,
-categorie_type,
 client,
 avion_pilote,
 vol_programmation_pilote,
@@ -93,12 +92,6 @@ CREATE TABLE client (
     telephone VARCHAR(20)
 );
 
-CREATE TABLE categorie_type (
-    id SERIAL PRIMARY KEY,
-    code VARCHAR(30) NOT NULL UNIQUE,
-    nom VARCHAR(50) NOT NULL
-);
-
 CREATE TABLE classe (
     id SERIAL PRIMARY KEY,
     nom VARCHAR(50)
@@ -120,10 +113,9 @@ CREATE TABLE reservation (
 );
 
 CREATE TABLE reservation_place (
-    id_reservation INTEGER NOT NULL REFERENCES reservation(id),
-    id_vol_programmation INTEGER NOT NULL REFERENCES vol_programmation(id),
-    place INTEGER NOT NULL,
-    id_categorie_type INTEGER NOT NULL REFERENCES categorie_type(id),
+    id_reservation INTEGER REFERENCES reservation(id),
+    id_vol_programmation INTEGER REFERENCES vol_programmation(id),
+    place INTEGER,
     PRIMARY KEY (id_vol_programmation, place)
 );
 
@@ -143,9 +135,7 @@ CREATE TABLE tarif_vol (
     id SERIAL PRIMARY KEY,
     id_vol_programmation INTEGER REFERENCES vol_programmation(id),
     id_classe INTEGER REFERENCES classe(id),
-    id_categorie_type INTEGER NOT NULL REFERENCES categorie_type(id),
-    tarif DECIMAL(10,2),
-    CONSTRAINT uk_tarif_vol UNIQUE (id_vol_programmation, id_classe, id_categorie_type)
+    tarif DECIMAL(10,2)
 );
 
 -- ===============================
@@ -157,11 +147,6 @@ INSERT INTO classe (nom) VALUES
 ('Première classe'),
 ('Économique'),
 ('Premium');
-
--- Catégories de passagers
-INSERT INTO categorie_type (code, nom) VALUES
-('ADULTE', 'Adulte'),
-('ENFANT', 'Enfant');
 
 -- Avion (120 places)
 INSERT INTO avion (matricule, capacite)
@@ -177,7 +162,7 @@ VALUES
 -- Aéroports
 INSERT INTO aeroport (nom) VALUES
 ('Antananarivo'),
-('Nosy Be');
+('Toamasina');
 
 -- Statuts vol
 INSERT INTO statut_vol (nom) VALUES
@@ -198,14 +183,11 @@ INSERT INTO vol_programmation_statut (id_vol_programmation, id_statut)
 VALUES (1, 1);
 
 -- Tarifs par classe
-INSERT INTO tarif_vol (id_vol_programmation, id_classe, id_categorie_type, tarif)
+INSERT INTO tarif_vol (id_vol_programmation, id_classe, tarif)
 VALUES
-(1, 1, (SELECT id FROM categorie_type WHERE code = 'ADULTE'), 1200000),     -- Première classe adulte
-(1, 2, (SELECT id FROM categorie_type WHERE code = 'ADULTE'), 700000),      -- Économique adulte
-(1, 3, (SELECT id FROM categorie_type WHERE code = 'ADULTE'), 1000000),     -- Premium adulte
-(1, 1, (SELECT id FROM categorie_type WHERE code = 'ENFANT'), 1200000),     -- Première classe enfant
-(1, 2, (SELECT id FROM categorie_type WHERE code = 'ENFANT'), 500000),      -- Économique enfant (remise)
-(1, 3, (SELECT id FROM categorie_type WHERE code = 'ENFANT'), 1000000);     -- Premium enfant
+(1, 1, 1200000),     -- Première classe
+(1, 2, 700000),      -- Économique
+(1, 3, 1000000);   -- Premium
 
 -- Client
 INSERT INTO client (nom, prenom, email, telephone)
@@ -217,15 +199,10 @@ VALUES ('Validée'), ('Annulée');
 
 -- Réservation de test
 INSERT INTO reservation (id_vol_programmation, id_client, nombre_places)
-VALUES (1, 1, 2);
+VALUES (1, 1, 1);
 
 INSERT INTO historique_reservation (id_reservation, id_statut)
 VALUES (1, 1);
-
-INSERT INTO reservation_place (id_reservation, id_vol_programmation, place, id_categorie_type)
-VALUES
-(1, 1, 31, (SELECT id FROM categorie_type WHERE code = 'ADULTE')),
-(1, 1, 32, (SELECT id FROM categorie_type WHERE code = 'ENFANT'));
 
 -- ===============================
 -- FIN DU SCRIPT

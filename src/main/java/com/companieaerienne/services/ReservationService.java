@@ -19,13 +19,20 @@ public class ReservationService {
     private final ClasseRepository classeRepository;
     private final ClassePlaceRepository classePlaceRepository;
     private final ReservationPlaceRepository reservationPlaceRepository;
+    private final CategorieTypeRepository categorieTypeRepository;
 
     @Transactional
-    public Optional<Reservation> createReservation(Integer volProgrammationId, Integer clientId, Integer classeId, int nombrePlaces) {
+    public Optional<Reservation> createReservation(Integer volProgrammationId, Integer clientId, Integer classeId, int nombrePlaces, int nombreEnfants) {
         VolProgrammation vp = volProgrammationRepository.findById(volProgrammationId).orElse(null);
         Client client = clientRepository.findById(clientId).orElse(null);
         Classe classe = classeRepository.findById(classeId).orElse(null);
         if (vp == null || client == null || classe == null) return Optional.empty();
+
+        if (nombreEnfants < 0 || nombreEnfants > nombrePlaces) return Optional.empty();
+
+        CategorieType adulte = categorieTypeRepository.findByCode("ADULTE").orElse(null);
+        CategorieType enfant = categorieTypeRepository.findByCode("ENFANT").orElse(null);
+        if (adulte == null || enfant == null) return Optional.empty();
 
         int restante = volProgrammationService.capaciteTotale(vp) - volProgrammationService.siegesReserves(vp);
         if (nombrePlaces > restante) return Optional.empty();
@@ -50,6 +57,7 @@ public class ReservationService {
                     rp.setVolProgrammation(vp);
                     rp.setPlace(seat);
                     rp.setReservation(res);
+                    rp.setCategorieType(assigned < nombreEnfants ? enfant : adulte);
                     reservationPlaceRepository.save(rp);
                     assigned++;
                 }

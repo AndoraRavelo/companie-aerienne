@@ -4,12 +4,9 @@ import com.companieaerienne.entities.Client;
 import com.companieaerienne.entities.Reservation;
 import com.companieaerienne.entities.VolProgrammation;
 import com.companieaerienne.repositories.ClientRepository;
-import com.companieaerienne.repositories.TarifVolRepository;
-import com.companieaerienne.repositories.VolProgrammationRepository;
 import com.companieaerienne.services.ReservationService;
 import com.companieaerienne.services.VolProgrammationService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -51,6 +48,10 @@ public class ReservationController {
         java.util.List<com.companieaerienne.entities.Classe> classes = ranges.stream()
                 .map(com.companieaerienne.entities.ClassePlace::getClasse).toList();
         java.util.List<com.companieaerienne.entities.TarifVol> tarifs = tarifVolRepository.findByVolProgrammation(vp);
+        java.util.List<com.companieaerienne.entities.TarifVol> tarifsAdultes = tarifs.stream()
+                .filter(t -> t.getCategorieType() != null && t.getCategorieType().getCode() != null)
+                .filter(t -> "ADULTE".equalsIgnoreCase(t.getCategorieType().getCode()))
+                .toList();
 
         Map<String, Integer> seatCounts = new LinkedHashMap<>();
         int totalSeats = 0;
@@ -66,6 +67,8 @@ public class ReservationController {
         BigDecimal maxRevenue = BigDecimal.ZERO;
         for (com.companieaerienne.entities.TarifVol tv : tarifs) {
             if (tv.getClasse() == null || tv.getTarif() == null) continue;
+            if (tv.getCategorieType() == null || tv.getCategorieType().getCode() == null) continue;
+            if (!"ADULTE".equalsIgnoreCase(tv.getCategorieType().getCode())) continue;
             String className = tv.getClasse().getNom();
             int seatsInClass = seatCounts.getOrDefault(className, 0);
             if (seatsInClass > 0) {
@@ -118,6 +121,7 @@ public class ReservationController {
         mv.addObject("passagers", passagers);
         mv.addObject("classes", classes);
         mv.addObject("tarifs", tarifs);
+        mv.addObject("tarifsAdultes", tarifsAdultes);
         mv.addObject("seatCounts", seatCounts);
         mv.addObject("remainingSeatsByClass", remainingSeatsByClass);
         mv.addObject("totalSeats", totalSeats);
@@ -264,6 +268,8 @@ public class ReservationController {
                 java.math.BigDecimal maxRevenue = java.math.BigDecimal.ZERO;
                 for (com.companieaerienne.entities.TarifVol tv : tarifVolRepository.findByVolProgrammation(selected)) {
                     if (tv.getClasse() == null || tv.getTarif() == null) continue;
+                    if (tv.getCategorieType() == null || tv.getCategorieType().getCode() == null) continue;
+                    if (!"ADULTE".equalsIgnoreCase(tv.getCategorieType().getCode())) continue;
                     String className = tv.getClasse().getNom();
                     int seatsInClass = seatCounts.getOrDefault(className, 0);
                     if (seatsInClass > 0) {
@@ -287,11 +293,12 @@ public class ReservationController {
                             }
                         }
                         if (classeForSeat != null) {
+                            if (rp.getCategorieType() == null) continue;
                             java.util.Optional<com.companieaerienne.entities.TarifVol> tvOpt =
-                                    tarifVolRepository.findByVolProgrammationAndClasse(selected, classeForSeat);
+                                    tarifVolRepository.findByVolProgrammationAndClasseAndCategorieType(selected, classeForSeat, rp.getCategorieType());
                             if (tvOpt.isPresent()) {
                                 java.math.BigDecimal price = tvOpt.get().getTarif();
-                                String className = classeForSeat.getNom();
+                                String className = classeForSeat.getNom() + " (" + rp.getCategorieType().getCode() + ")";
                                 qtyByClass.put(className, qtyByClass.getOrDefault(className, 0) + 1);
                                 priceByClass.putIfAbsent(className, price);
                                 total = total.add(price);
@@ -361,7 +368,8 @@ public class ReservationController {
     public ModelAndView createReservation(@RequestParam Integer vpId,
                                           @RequestParam Integer clientId,
                                           @RequestParam Integer classeId,
-                                          @RequestParam Integer nombrePlaces) {
+                                          @RequestParam Integer nombrePlaces,
+                                          @RequestParam(defaultValue = "0") Integer nombreEnfants) {
         VolProgrammation vp = volProgrammationRepository.findById(vpId).orElse(null);
         if (vp == null) return new ModelAndView("redirect:/volsprogrammations");
 
@@ -373,27 +381,49 @@ public class ReservationController {
             err.addObject("contentView", "/WEB-INF/jsp/reservations/error.jsp");
             return err;
         }
-        java.util.Optional<com.companieaerienne.entities.TarifVol> tv = tarifVolRepository.findByVolProgrammationAndClasse(vp, classe);
-        if (tv.isEmpty()) {
+        java.util.Optional<com.companieaerienne.entities.TarifVol> tvAdulte = tarifVolRepository.findByVolProgrammation(vp).stream()
+                .filter(t -> t.getClasse() != null && t.getClasse().getId() != null && t.getClasse().getId().equals(classeId))
+                .filter(t -> t.getCategorieType() != null && t.getCategorieType().getCode() != null)
+                .filter(t -> "ADULTE".equalsIgnoreCase(t.getCategorieType().getCode()))
+                .findFirst();
+        if (tvAdulte.isEmpty()) {
             ModelAndView err = new ModelAndView("layout");
             err.addObject("pageTitle", "Tarif indisponible");
             err.addObject("contentView", "/WEB-INF/jsp/reservations/error.jsp");
             return err;
         }
 
-        BigDecimal total = tv.get().getTarif().multiply(BigDecimal.valueOf(nombrePlaces));
-        Optional<Reservation> created = reservationService.createReservation(vpId, clientId, classeId, nombrePlaces);
+        Optional<Reservation> created = reservationService.createReservation(vpId, clientId, classeId, nombrePlaces, nombreEnfants);
 
         ModelAndView mv = new ModelAndView("layout");
         if (created.isPresent()) {
             mv.addObject("pageTitle", "Confirmation");
             mv.addObject("contentView", "/WEB-INF/jsp/reservations/confirm.jsp");
             mv.addObject("reservation", created.get());
-            mv.addObject("tarif", tv.get().getTarif());
-            mv.addObject("total", total);
             java.util.List<com.companieaerienne.entities.ReservationPlace> places =
                     reservationPlaceRepository.findByReservation(created.get());
             mv.addObject("places", places);
+
+            java.math.BigDecimal computedTotal = java.math.BigDecimal.ZERO;
+            java.util.List<com.companieaerienne.entities.ClassePlace> ranges = classePlaceRepository.findByAvion(vp.getAvion());
+            for (com.companieaerienne.entities.ReservationPlace rp : places) {
+                if (rp.getPlace() == null || rp.getCategorieType() == null) continue;
+                com.companieaerienne.entities.Classe classeForSeat = null;
+                for (com.companieaerienne.entities.ClassePlace cp : ranges) {
+                    if (cp.getPlaceDebut() == null || cp.getPlaceFin() == null) continue;
+                    if (rp.getPlace() >= cp.getPlaceDebut() && rp.getPlace() <= cp.getPlaceFin()) {
+                        classeForSeat = cp.getClasse();
+                        break;
+                    }
+                }
+                if (classeForSeat == null) continue;
+                java.util.Optional<com.companieaerienne.entities.TarifVol> tvOpt =
+                        tarifVolRepository.findByVolProgrammationAndClasseAndCategorieType(vp, classeForSeat, rp.getCategorieType());
+                if (tvOpt.isPresent() && tvOpt.get().getTarif() != null) {
+                    computedTotal = computedTotal.add(tvOpt.get().getTarif());
+                }
+            }
+            mv.addObject("total", computedTotal);
         } else {
             mv.addObject("pageTitle", "Erreur");
             mv.addObject("contentView", "/WEB-INF/jsp/reservations/error.jsp");

@@ -34,10 +34,6 @@
         <span class="badge text-bg-primary">${reservation.nombrePlaces}</span>
       </li>
       <li class="list-group-item d-flex justify-content-between align-items-center">
-        <span class="text-muted"><i class="bi bi-cash-coin me-2"></i>Tarif unitaire</span>
-        <span class="fw-semibold"><fmt:formatNumber value="${tarif}" type="currency" currencySymbol="Ar"/></span>
-      </li>
-      <li class="list-group-item d-flex justify-content-between align-items-center">
         <span class="text-muted"><i class="bi bi-receipt me-2"></i>Total</span>
         <span class="fw-bold"><fmt:formatNumber value="${total}" type="currency" currencySymbol="Ar"/></span>
       </li>

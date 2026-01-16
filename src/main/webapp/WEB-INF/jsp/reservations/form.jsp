@@ -102,6 +102,12 @@
           <input id="qteInput" type="number" name="nombrePlaces" class="form-control" min="1" max="${restants}" value="1" required>
           <div class="form-text">Maximum : ${restants}</div>
         </div>
+
+        <div class="col-12 col-md-3">
+          <label class="form-label">Nombre d'enfants</label>
+          <input id="enfantsInput" type="number" name="nombreEnfants" class="form-control" min="0" max="1" value="0" required>
+          <div class="form-text">Doit être ≤ nombre de places.</div>
+        </div>
       </div>
 
       <div class="d-flex flex-wrap gap-2 mt-4">
@@ -123,12 +129,13 @@
     // Build a tarifs map: classeId -> tarif
     var tarifs = {};
     <%-- expose tarifs from model --%>
-    <c:forEach items="${tarifs}" var="t">
+    <c:forEach items="${tarifsAdultes}" var="t">
       tarifs['${t.classe.id}'] = '${t.tarif}';
     </c:forEach>
 
     var cls = document.getElementById('classeSelect');
     var qte = document.getElementById('qteInput');
+    var enfants = document.getElementById('enfantsInput');
     var tarifEl = document.getElementById('tarifDisplay');
     var totalEl = document.getElementById('totalDisplay');
 
@@ -140,6 +147,12 @@
       var classeId = cls.value;
       var tarif = tarifs[classeId];
       var qty = parseInt(qte.value || '0', 10);
+      var enf = parseInt(enfants.value || '0', 10);
+      if (enf > qty) {
+        enf = qty;
+        enfants.value = '' + enf;
+      }
+      enfants.max = '' + qty;
       if (tarif) {
         tarifEl.textContent = fmt(tarif) + ' Ar';
         totalEl.textContent = fmt(parseFloat(tarif) * qty) + ' Ar';
@@ -151,6 +164,7 @@
 
     cls.addEventListener('change', refresh);
     qte.addEventListener('input', refresh);
+    enfants.addEventListener('input', refresh);
     // init
     refresh();
   })();
