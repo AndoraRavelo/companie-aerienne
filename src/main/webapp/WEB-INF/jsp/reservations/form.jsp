@@ -2,18 +2,19 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
-<div class="d-flex align-items-center gap-2 mb-4">
-  <div class="rounded-circle bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center" style="width:44px;height:44px;">
-    <i class="bi bi-ticket-perforated"></i>
+<div class="reservation-page">
+  <div class="d-flex align-items-center gap-2 mb-4 reservation-page__header">
+    <div class="rounded-circle bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center" style="width:44px;height:44px;">
+      <i class="bi bi-ticket-perforated"></i>
+    </div>
+    <div>
+      <h1 class="h3 mb-0">Réserver un vol</h1>
+      <div class="text-muted">Choisis un client et saisis le nombre de places (et enfants) par classe.</div>
+    </div>
   </div>
-  <div>
-    <h1 class="h3 mb-0">Réserver un vol</h1>
-    <div class="text-muted">Choisis un client et saisis le nombre de places (et enfants) par classe.</div>
-  </div>
-</div>
 
-<div class="card mb-4">
-  <div class="card-body">
+  <div class="card mb-4 reservation-card">
+    <div class="card-body">
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
       <div>
         <h5 class="card-title mb-2 d-flex align-items-center gap-2">
@@ -67,11 +68,12 @@
     <div class="mt-3 d-flex flex-wrap gap-3">
       <div><span class="text-muted"><i class="bi bi-receipt me-1"></i>Total estimé (tarifs adultes) :</span> <span id="totalDisplay">—</span></div>
     </div>
+    </div>
   </div>
 </div>
 
-<div class="card mb-4">
-  <div class="card-body">
+  <div class="card mb-4 reservation-card">
+    <div class="card-body">
     <h5 class="card-title mb-3">Informations réservation</h5>
 
     <form class="needs-validation" method="post" action="/reservation/create">
@@ -91,7 +93,7 @@
       <div class="mt-4">
         <h6 class="mb-2">Places par classe</h6>
         <div class="table-responsive">
-          <table class="table table-sm align-middle mb-0">
+          <table class="table table-sm align-middle mb-0 reservation-table">
             <thead class="table-light">
               <tr>
                 <th>Classe</th>
@@ -142,8 +144,8 @@
         </a>
       </div>
     </form>
+    </div>
   </div>
-</div>
 
 <script>
   (function() {
@@ -198,3 +200,5 @@
     refresh();
   })();
   </script>
+
+</div>
