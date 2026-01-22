@@ -201,3 +201,95 @@ BEGIN
   WHERE rn BETWEEN 1 AND 29;
 
 END $$;
+
+
+
+
+
+
+-- 1) Tarif pub (si pas encore présent)
+INSERT INTO tarif_diffusion_pub (montant, date_debut, date_fin)
+SELECT 400000, DATE '2025-01-01', NULL
+WHERE NOT EXISTS (
+  SELECT 1 FROM tarif_diffusion_pub
+  WHERE montant = 400000
+    AND date_debut = DATE '2025-01-01'
+    AND date_fin IS NULL
+);
+
+-- 2) Créer un vol_programmation en décembre 2025 (en reprenant le vol+avion existants)
+WITH vp_src AS (
+  SELECT id_vol, id_avion
+  FROM vol_programmation
+  ORDER BY id DESC
+  LIMIT 1
+),
+ins_vp AS (
+  INSERT INTO vol_programmation (id_vol, id_avion, date_heure)
+  SELECT id_vol, id_avion, TIMESTAMP '2025-12-15 08:00:00'
+  FROM vp_src
+  RETURNING id
+)
+INSERT INTO vol_programmation_statut (id_vol_programmation, id_statut)
+SELECT ins_vp.id,
+       (SELECT id FROM statut_vol WHERE lower(nom)=lower('Programmé') ORDER BY id DESC LIMIT 1)
+FROM ins_vp;
+
+-- 3) (Optionnel) Affecter un pilote au vol de décembre 2025
+WITH vp_dec AS (
+  SELECT id
+  FROM vol_programmation
+  WHERE date_heure = TIMESTAMP '2025-12-15 08:00:00'
+  ORDER BY id DESC
+  LIMIT 1
+)
+INSERT INTO vol_programmation_pilote (id_vol_programmation, id_pilote, role)
+SELECT vp_dec.id,
+       (SELECT id FROM pilote ORDER BY id DESC LIMIT 1),
+       'Commandant'
+FROM vp_dec
+ON CONFLICT (id_vol_programmation, id_pilote) DO NOTHING;
+
+-- 4) Sociétés
+INSERT INTO societe (nom) VALUES ('Vaniala') ON CONFLICT (nom) DO NOTHING;
+INSERT INTO societe (nom) VALUES ('Lewis')   ON CONFLICT (nom) DO NOTHING;
+
+-- Paiement : Vaniala a payé 1 000 000 Ar le 15/12/2025
+INSERT INTO paiement_pub (id_societe, date_paiement, montant)
+SELECT s.id, DATE '2025-12-15', 1000000
+FROM societe s
+WHERE s.nom = 'Vaniala';
+
+-- 5) Vidéos (1 vidéo par société)
+INSERT INTO video_publicitaire (id_societe, titre)
+SELECT s.id, 'Pub Vaniala'
+FROM societe s
+WHERE s.nom = 'Vaniala';
+
+INSERT INTO video_publicitaire (id_societe, titre)
+SELECT s.id, 'Pub Lewis'
+FROM societe s
+WHERE s.nom = 'Lewis';
+
+-- 6) Diffusions (B2) sur le vol de décembre 2025
+INSERT INTO diffusion_pub (id_vol_programmation, id_video_publicitaire, nombre_diffusions)
+SELECT
+  (SELECT id FROM vol_programmation WHERE date_heure = TIMESTAMP '2025-12-15 08:00:00' ORDER BY id DESC LIMIT 1),
+  (SELECT v.id FROM video_publicitaire v
+     JOIN societe s ON s.id = v.id_societe
+   WHERE s.nom='Vaniala' AND v.titre='Pub Vaniala'
+   ORDER BY v.id DESC LIMIT 1),
+  20
+ON CONFLICT (id_vol_programmation, id_video_publicitaire)
+DO UPDATE SET nombre_diffusions = EXCLUDED.nombre_diffusions;
+
+INSERT INTO diffusion_pub (id_vol_programmation, id_video_publicitaire, nombre_diffusions)
+SELECT
+  (SELECT id FROM vol_programmation WHERE date_heure = TIMESTAMP '2025-12-15 08:00:00' ORDER BY id DESC LIMIT 1),
+  (SELECT v.id FROM video_publicitaire v
+     JOIN societe s ON s.id = v.id_societe
+   WHERE s.nom='Lewis' AND v.titre='Pub Lewis'
+   ORDER BY v.id DESC LIMIT 1),
+  10
+ON CONFLICT (id_vol_programmation, id_video_publicitaire)
+DO UPDATE SET nombre_diffusions = EXCLUDED.nombre_diffusions;

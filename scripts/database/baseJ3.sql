@@ -138,9 +138,50 @@ CREATE TABLE tarif_vol (
    CONSTRAINT uk_tarif_vol UNIQUE (id_vol_programmation, id_classe, id_categorie_type)
 );
 
+CREATE TABLE societe (
+   id SERIAL PRIMARY KEY,
+   nom VARCHAR(150) NOT NULL UNIQUE
+);
+
+CREATE TABLE video_publicitaire (
+   id SERIAL PRIMARY KEY,
+   id_societe INTEGER NOT NULL REFERENCES societe(id),
+   titre VARCHAR(200)
+);
+
+CREATE TABLE tarif_diffusion_pub (
+   id SERIAL PRIMARY KEY,
+   montant DECIMAL(15,2) NOT NULL,
+   date_debut DATE NOT NULL,
+   date_fin DATE,
+   CONSTRAINT ck_tarif_diffusion_pub_dates CHECK (date_fin IS NULL OR date_fin >= date_debut)
+);
+
+CREATE TABLE diffusion_pub (
+   id SERIAL PRIMARY KEY,
+   id_vol_programmation INTEGER NOT NULL REFERENCES vol_programmation(id),
+   id_video_publicitaire INTEGER NOT NULL REFERENCES video_publicitaire(id),
+   nombre_diffusions INTEGER NOT NULL,
+   date_saisie TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+   CONSTRAINT ck_diffusion_pub_nombre CHECK (nombre_diffusions > 0),
+   CONSTRAINT uk_diffusion_pub UNIQUE (id_vol_programmation, id_video_publicitaire)
+);
+
+CREATE TABLE paiement_pub (
+   id SERIAL PRIMARY KEY,
+   id_societe INTEGER NOT NULL REFERENCES societe(id),
+   date_paiement DATE NOT NULL,
+   montant DECIMAL(15,2) NOT NULL,
+   date_saisie TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+   CONSTRAINT ck_paiement_pub_montant CHECK (montant > 0)
+);
+
 -- ===============================
 -- DONNÉES DE BASE (NIVEAU 1)
 -- ===============================
 INSERT INTO categorie_type (code, nom) VALUES
 ('ADULTE', 'Adulte'),
 ('ENFANT', 'Enfant');
+
+INSERT INTO tarif_diffusion_pub (montant, date_debut, date_fin) VALUES
+(400000, '2025-01-01', NULL);

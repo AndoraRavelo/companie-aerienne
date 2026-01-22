@@ -47,5 +47,11 @@
       <span>Clients</span>
     </a>
   </li>
+  <li class="nav-item">
+    <a class="nav-link ${uri.startsWith('/publicites') ? 'active' : ''}" href="/publicites/ca">
+      <i class="bi bi-megaphone"></i>
+      <span>Publicités</span>
+    </a>
+  </li>
   <!-- <li class="nav-item"><a class="nav-link" href="/tarifs">Tarifs</a></li> -->
 </ul>
