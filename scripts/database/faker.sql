@@ -235,3 +235,10 @@ VALUES
 -- ===============================
 -- FIN DU SCRIPT
 -- ===============================
+
+
+UPDATE tarif_vol tv
+SET tarif = 900000
+WHERE tv.id_vol_programmation = 1
+  AND tv.id_categorie_type = (SELECT id FROM categorie_type WHERE code = 'ADULTE')
+  AND tv.id_classe = (SELECT id FROM classe WHERE nom = 'Économique');
