@@ -66,5 +66,12 @@
       <span>Paiements pubs</span>
     </a>
   </li>
+
+  <li class="nav-item">
+    <a class="nav-link ${uri.startsWith('/extras/achats') ? 'active' : ''}" href="/extras/achats/new">
+      <i class="bi bi-bag-plus"></i>
+      <span>Achats extras</span>
+    </a>
+  </li>
   <!-- <li class="nav-item"><a class="nav-link" href="/tarifs">Tarifs</a></li> -->
 </ul>

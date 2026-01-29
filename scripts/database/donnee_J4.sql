@@ -1,4 +1,7 @@
 DROP TABLE IF EXISTS
+  achat_extra_ligne,
+  achat_extra,
+  produit_extra,
   diffusion_pub,
   paiement_pub,
   tarif_diffusion_pub,
@@ -130,6 +133,32 @@ DROP TABLE IF EXISTS
    nombre_places INTEGER DEFAULT 1
  );
 
+ -- ===============================
+ -- PRODUITS EXTRA
+ -- ===============================
+ CREATE TABLE produit_extra (
+   id SERIAL PRIMARY KEY,
+   libelle VARCHAR(150) NOT NULL,
+   prix_unitaire DECIMAL(15,2) NOT NULL,
+   actif BOOLEAN NOT NULL DEFAULT TRUE
+ );
+
+ CREATE TABLE achat_extra (
+   id SERIAL PRIMARY KEY,
+   id_client INTEGER NOT NULL REFERENCES client(id),
+   id_vol_programmation INTEGER NOT NULL REFERENCES vol_programmation(id),
+   date_achat TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+ );
+
+ CREATE TABLE achat_extra_ligne (
+   id SERIAL PRIMARY KEY,
+   id_achat_extra INTEGER NOT NULL REFERENCES achat_extra(id) ON DELETE CASCADE,
+   id_produit_extra INTEGER NOT NULL REFERENCES produit_extra(id),
+   quantite INTEGER NOT NULL,
+   prix_unitaire_applique DECIMAL(15,2) NOT NULL,
+   sous_total DECIMAL(15,2) NOT NULL
+ );
+
  -- Création de la table ReservationPlace
  CREATE TABLE reservation_place (
    id_reservation INTEGER NOT NULL REFERENCES reservation(id),
@@ -221,6 +250,9 @@ DROP TABLE IF EXISTS
  INSERT INTO client (id, nom, prenom, email, telephone)
  VALUES (1, 'Rakoto', 'Jean', 'jean.rakoto@email.mg', '0340000000');
 
+ INSERT INTO produit_extra (id, libelle, prix_unitaire, actif)
+ VALUES (1, 'Tablette de chocolat', 5000, TRUE);
+
  INSERT INTO classe (id, nom) VALUES (1, 'Première classe');
  INSERT INTO classe (id, nom) VALUES (2, 'Économique');
  INSERT INTO classe (id, nom) VALUES (3, 'Premium');
@@ -254,6 +286,12 @@ DROP TABLE IF EXISTS
  INSERT INTO vol_programmation (id, id_vol, id_avion, date_heure) VALUES (2, 1, 1, '2025-12-15 08:00:00');
  INSERT INTO vol_programmation_statut (id, id_vol_programmation, id_statut) VALUES (2, 2, 1);
  INSERT INTO vol_programmation_pilote (id_vol_programmation, id_pilote, role) VALUES (2, 1, 'Commandant');
+
+ -- Achat extra sur le vol_programmation #2
+ INSERT INTO achat_extra (id, id_client, id_vol_programmation, date_achat)
+ VALUES (1, 1, 2, '2025-12-15 07:30:00');
+ INSERT INTO achat_extra_ligne (id, id_achat_extra, id_produit_extra, quantite, prix_unitaire_applique, sous_total)
+ VALUES (1, 1, 1, 2, 5000, 10000);
 
  INSERT INTO societe (id, nom) VALUES (1, 'Vaniala');
  INSERT INTO societe (id, nom) VALUES (2, 'Lewis');
@@ -343,3 +381,6 @@ CREATE TABLE paiement_pub_affectation (
  SELECT setval(pg_get_serial_sequence('video_publicitaire', 'id'), (SELECT COALESCE(MAX(id), 1) FROM video_publicitaire), true);
  SELECT setval(pg_get_serial_sequence('tarif_diffusion_pub', 'id'), (SELECT COALESCE(MAX(id), 1) FROM tarif_diffusion_pub), true);
  SELECT setval(pg_get_serial_sequence('diffusion_pub', 'id'), (SELECT COALESCE(MAX(id), 1) FROM diffusion_pub), true);
+ SELECT setval(pg_get_serial_sequence('produit_extra', 'id'), (SELECT COALESCE(MAX(id), 1) FROM produit_extra), true);
+ SELECT setval(pg_get_serial_sequence('achat_extra', 'id'), (SELECT COALESCE(MAX(id), 1) FROM achat_extra), true);
+ SELECT setval(pg_get_serial_sequence('achat_extra_ligne', 'id'), (SELECT COALESCE(MAX(id), 1) FROM achat_extra_ligne), true);

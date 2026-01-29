@@ -5,6 +5,7 @@ import com.companieaerienne.entities.Classe;
 import com.companieaerienne.entities.TarifDiffusionPub;
 import com.companieaerienne.entities.TarifVol;
 import com.companieaerienne.entities.VolProgrammation;
+import com.companieaerienne.repositories.AchatExtraLigneRepository;
 import com.companieaerienne.repositories.CategorieTypeRepository;
 import com.companieaerienne.repositories.ClasseRepository;
 import com.companieaerienne.repositories.DiffusionPubRepository;
@@ -30,6 +31,7 @@ public class ChiffreAffairesVolService {
     private final ReservationRepository reservationRepository;
     private final DiffusionPubRepository diffusionPubRepository;
     private final FacturePubLigneRepository facturePubLigneRepository;
+    private final AchatExtraLigneRepository achatExtraLigneRepository;
     private final TarifDiffusionPubRepository tarifDiffusionPubRepository;
     private final TarifVolRepository tarifVolRepository;
     private final ClasseRepository classeRepository;
@@ -38,6 +40,7 @@ public class ChiffreAffairesVolService {
     public record LigneCaVol(VolProgrammation vp,
                              BigDecimal montantBillets,
                              BigDecimal montantPublicites,
+                             BigDecimal montantExtras,
                              BigDecimal montantTotal,
                              Integer billetsVendus,
                              Integer diffusions,
@@ -89,7 +92,14 @@ public class ChiffreAffairesVolService {
             }
 
             BigDecimal caPubs = tarifDiff.multiply(BigDecimal.valueOf(nbDiffs));
-            BigDecimal total = caBillets.add(caPubs);
+
+            BigDecimal caExtras = BigDecimal.ZERO;
+            BigDecimal sumExtras = achatExtraLigneRepository.sumSousTotalByVolProgrammation(vp);
+            if (sumExtras != null) {
+                caExtras = sumExtras;
+            }
+
+            BigDecimal total = caBillets.add(caPubs).add(caExtras);
 
             BigDecimal pubsPayees = BigDecimal.ZERO;
             BigDecimal sumPaye = facturePubLigneRepository.sumMontantPayeByVolProgrammation(vp);
@@ -104,7 +114,7 @@ public class ChiffreAffairesVolService {
             String dateDepart = vp.getDateHeure().toLocalDate().format(DateTimeFormatter.ISO_LOCAL_DATE);
             String heureDepart = vp.getDateHeure().toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"));
 
-            lignes.add(new LigneCaVol(vp, caBillets, caPubs, total, nbBillets, nbDiffs, dateDepart, heureDepart, pubsPayees, restePubs));
+            lignes.add(new LigneCaVol(vp, caBillets, caPubs, caExtras, total, nbBillets, nbDiffs, dateDepart, heureDepart, pubsPayees, restePubs));
         }
 
         return lignes;

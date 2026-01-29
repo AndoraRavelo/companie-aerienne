@@ -29,6 +29,7 @@ public class ChiffreAffaireController {
                               BigDecimal caBillets,
                               Integer diffusionsPubs,
                               BigDecimal caPubs,
+                              BigDecimal caExtras,
                               BigDecimal pubsPayees,
                               BigDecimal restePubs,
                               BigDecimal caTotal) {
@@ -62,12 +63,14 @@ public class ChiffreAffaireController {
                     int totalDiffusionsPubs = 0;
                     BigDecimal totalCaBillets = BigDecimal.ZERO;
                     BigDecimal totalCaPubs = BigDecimal.ZERO;
+                    BigDecimal totalCaExtras = BigDecimal.ZERO;
                     BigDecimal totalPubsPayees = BigDecimal.ZERO;
                     BigDecimal totalRestePubs = BigDecimal.ZERO;
                     BigDecimal totalCaTotal = BigDecimal.ZERO;
 
                     BigDecimal caBilletsTotal = BigDecimal.ZERO;
                     BigDecimal caPubsTotal = BigDecimal.ZERO;
+                    BigDecimal caExtrasTotal = BigDecimal.ZERO;
 
                     List<com.companieaerienne.entities.VolProgrammation> vols = new ArrayList<>();
 
@@ -83,6 +86,10 @@ public class ChiffreAffaireController {
                         if (l.montantPublicites() != null) {
                             caPubsTotal = caPubsTotal.add(l.montantPublicites());
                             totalCaPubs = totalCaPubs.add(l.montantPublicites());
+                        }
+                        if (l.montantExtras() != null) {
+                            caExtrasTotal = caExtrasTotal.add(l.montantExtras());
+                            totalCaExtras = totalCaExtras.add(l.montantExtras());
                         }
 
                         if (l.billetsVendus() != null) {
@@ -107,6 +114,7 @@ public class ChiffreAffaireController {
                             totalCaBillets,
                             totalDiffusionsPubs,
                             totalCaPubs,
+                            totalCaExtras,
                             totalPubsPayees,
                             totalRestePubs,
                             totalCaTotal
@@ -139,10 +147,13 @@ public class ChiffreAffaireController {
                         }
                     }
 
-                    BigDecimal caTheorique = caBilletsTotal.add(caPubsTotal);
-                    BigDecimal caPaye = caBilletsTotal.add(pubsPayees);
+                    BigDecimal caTheorique = caBilletsTotal.add(caPubsTotal).add(caExtrasTotal);
+                    BigDecimal caPaye = caBilletsTotal.add(pubsPayees).add(caExtrasTotal);
                     BigDecimal resteAPayer = caTheorique.subtract(caPaye);
 
+                    mv.addObject("caBilletsTotal", caBilletsTotal);
+                    mv.addObject("caDiffusionsTheorique", caPubsTotal);
+                    mv.addObject("caExtrasTotal", caExtrasTotal);
                     mv.addObject("caTheorique", caTheorique);
                     mv.addObject("caPaye", caPaye);
                     mv.addObject("resteAPayer", resteAPayer);

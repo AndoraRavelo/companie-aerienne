@@ -93,6 +93,45 @@
         </div>
       </div>
 
+      <div class="row g-2 mb-3 justify-content-center">
+        <div class="col-12 col-md-3">
+          <div class="border border-secondary-subtle bg-body-tertiary rounded-3 p-2 h-100 shadow-sm">
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="text-muted fw-semibold small text-uppercase">CA Billets</div>
+              <i class="bi bi-ticket-perforated text-muted"></i>
+            </div>
+            <div class="mt-1 fs-6 fw-bold text-body">
+              <fmt:formatNumber value="${caBilletsTotal}" type="number" groupingUsed="true" /> Ar
+            </div>
+            <div class="small text-muted">Recette billets sur la période</div>
+          </div>
+        </div>
+        <div class="col-12 col-md-3">
+          <div class="border border-secondary-subtle bg-body-tertiary rounded-3 p-2 h-100 shadow-sm">
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="text-muted fw-semibold small text-uppercase">CA Diffusions</div>
+              <i class="bi bi-megaphone text-muted"></i>
+            </div>
+            <div class="mt-1 fs-6 fw-bold text-body">
+              <fmt:formatNumber value="${caDiffusionsTheorique}" type="number" groupingUsed="true" /> Ar
+            </div>
+            <div class="small text-muted">Montant des pubs diffusées</div>
+          </div>
+        </div>
+        <div class="col-12 col-md-3">
+          <div class="border border-secondary-subtle bg-body-tertiary rounded-3 p-2 h-100 shadow-sm">
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="text-muted fw-semibold small text-uppercase">CA Extras</div>
+              <i class="bi bi-bag-plus text-muted"></i>
+            </div>
+            <div class="mt-1 fs-6 fw-bold text-body">
+              <fmt:formatNumber value="${caExtrasTotal}" type="number" groupingUsed="true" /> Ar
+            </div>
+            <div class="small text-muted">Ventes extras sur la période</div>
+          </div>
+        </div>
+      </div>
+
       <c:if test="${not empty periodeStart and not empty periodeEnd}">
         <div class="mt-2 text-muted">Période : ${periodeStart} → ${periodeEnd}</div>
       </c:if>
@@ -138,18 +177,17 @@
     <div class="card-body">
       <h5 class="card-title mb-3">Chiffre d'affaire par vol programmé</h5>
       <div class="table-responsive">
-        <table class="table table-sm table-hover align-middle mb-0 text-nowrap">
+        <table class="table table-sm table-hover align-middle mb-0">
           <thead class="table-light">
           <tr>
-            <th>Aéroport départ</th>
-            <th>Aéroport arrivée</th>
+            <th>Route</th>
             <th>Avion</th>
-            <th>Date départ</th>
-            <th>Heure départ</th>
+            <th>Départ</th>
             <th class="text-end">Billets vendus</th>
             <th class="text-end">CA billets</th>
             <th class="text-end">Diffusions pubs</th>
             <th class="text-end">CA pubs</th>
+            <th class="text-end">CA extras</th>
             <th class="text-end">Total payé pubs</th>
             <th class="text-end">Reste à payer pubs</th>
             <th class="text-end">CA total</th>
@@ -158,15 +196,19 @@
           <tbody>
           <c:forEach items="${lignes}" var="l">
             <tr>
-              <td><c:out value="${l.vp.vol.aeroportDepart.nom}"/></td>
-              <td><c:out value="${l.vp.vol.aeroportArrivee.nom}"/></td>
+              <td>
+                <div class="fw-semibold"><c:out value="${l.vp.vol.aeroportDepart.nom}"/> → <c:out value="${l.vp.vol.aeroportArrivee.nom}"/></div>
+              </td>
               <td><c:out value="${l.vp.avion.matricule}"/></td>
-              <td><c:out value="${l.dateDepart}"/></td>
-              <td><c:out value="${l.heureDepart}"/></td>
+              <td>
+                <div class="fw-semibold"><c:out value="${l.dateDepart}"/></div>
+                <div class="text-muted small"><c:out value="${l.heureDepart}"/></div>
+              </td>
               <td class="text-end"><c:out value="${l.billetsVendus}"/></td>
               <td class="text-end"><fmt:formatNumber value="${l.montantBillets}" type="number" groupingUsed="true" /> Ar</td>
               <td class="text-end"><c:out value="${l.diffusions}"/></td>
               <td class="text-end"><fmt:formatNumber value="${l.montantPublicites}" type="number" groupingUsed="true" /> Ar</td>
+              <td class="text-end"><fmt:formatNumber value="${l.montantExtras}" type="number" groupingUsed="true" /> Ar</td>
               <c:choose>
                 <c:when test="${l.montantPublicitesPayee > 0}">
                   <td class="text-end text-success fw-semibold"><fmt:formatNumber value="${l.montantPublicitesPayee}" type="number" groupingUsed="true" /> Ar</td>
@@ -190,11 +232,12 @@
           <c:if test="${not empty totauxTable}">
             <tfoot class="table-light">
             <tr class="fw-bold">
-              <th colspan="5" class="text-end">TOTAL</th>
+              <th colspan="3" class="text-end">TOTAL</th>
               <th class="text-end"><c:out value="${totauxTable.billetsVendus}"/></th>
               <th class="text-end"><fmt:formatNumber value="${totauxTable.caBillets}" type="number" groupingUsed="true" /> Ar</th>
               <th class="text-end"><c:out value="${totauxTable.diffusionsPubs}"/></th>
               <th class="text-end"><fmt:formatNumber value="${totauxTable.caPubs}" type="number" groupingUsed="true" /> Ar</th>
+              <th class="text-end"><fmt:formatNumber value="${totauxTable.caExtras}" type="number" groupingUsed="true" /> Ar</th>
               <th class="text-end"><fmt:formatNumber value="${totauxTable.pubsPayees}" type="number" groupingUsed="true" /> Ar</th>
               <th class="text-end"><fmt:formatNumber value="${totauxTable.restePubs}" type="number" groupingUsed="true" /> Ar</th>
               <th class="text-end"><fmt:formatNumber value="${totauxTable.caTotal}" type="number" groupingUsed="true" /> Ar</th>
