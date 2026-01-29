@@ -1,8 +1,8 @@
 package com.companieaerienne.services;
 
 import com.companieaerienne.entities.TarifDiffusionPub;
+import com.companieaerienne.repositories.FacturePubRepository;
 import com.companieaerienne.repositories.DiffusionPubRepository;
-import com.companieaerienne.repositories.PaiementPubRepository;
 import com.companieaerienne.repositories.TarifDiffusionPubRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,7 +21,7 @@ public class PubliciteService {
 
     private final DiffusionPubRepository diffusionPubRepository;
     private final TarifDiffusionPubRepository tarifDiffusionPubRepository;
-    private final PaiementPubRepository paiementPubRepository;
+    private final FacturePubRepository facturePubRepository;
 
     public record LigneCaPublicite(String societe,
                                   int nombreDiffusions,
@@ -68,20 +68,15 @@ public class PubliciteService {
         LocalDateTime start = debut.atStartOfDay();
         LocalDateTime end = fin.atStartOfDay();
 
+        // IMPORTANT: avec la facturation mensuelle, un paiement peut être effectué en dehors du mois facturé.
+        // On doit donc calculer le 'payé' à partir des factures du mois (facture_pub.total_paye), pas via date_paiement.
         Map<String, BigDecimal> payesParSociete = new HashMap<>();
-        List<Object[]> rowsPayes = paiementPubRepository.sumMontantBySocieteBetween(debut, fin);
-        if (rowsPayes != null) {
-            for (Object[] r : rowsPayes) {
-                String societe = r[0] != null ? r[0].toString() : null;
-                BigDecimal paye = BigDecimal.ZERO;
-                if (r[1] instanceof BigDecimal) {
-                    paye = (BigDecimal) r[1];
-                } else if (r[1] instanceof Number) {
-                    paye = BigDecimal.valueOf(((Number) r[1]).doubleValue());
-                }
-                if (societe != null) {
-                    payesParSociete.put(societe, paye);
-                }
+        List<com.companieaerienne.entities.FacturePub> factures = facturePubRepository.findByAnneeAndMois(annee, mois);
+        if (factures != null) {
+            for (com.companieaerienne.entities.FacturePub f : factures) {
+                if (f == null || f.getSociete() == null || f.getSociete().getNom() == null) continue;
+                BigDecimal paye = f.getTotalPaye() != null ? f.getTotalPaye() : BigDecimal.ZERO;
+                payesParSociete.put(f.getSociete().getNom(), paye);
             }
         }
 

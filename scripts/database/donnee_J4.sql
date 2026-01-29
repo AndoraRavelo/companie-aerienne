@@ -272,6 +272,59 @@ DROP TABLE IF EXISTS
  INSERT INTO diffusion_pub (id, id_vol_programmation, id_video_publicitaire, nombre_diffusions)
  VALUES (2, 2, 2, 10);
 
+
+
+ -- 0) Nettoyage (optionnel si tu veux repartir clean)
+DROP TABLE IF EXISTS paiement_pub_affectation CASCADE;
+DROP TABLE IF EXISTS paiement_pub CASCADE;
+DROP TABLE IF EXISTS facture_pub_ligne CASCADE;
+DROP TABLE IF EXISTS facture_pub CASCADE;
+
+-- 1) Facture mensuelle (1 société x 1 mois)
+CREATE TABLE facture_pub (
+  id SERIAL PRIMARY KEY,
+  id_societe INTEGER NOT NULL REFERENCES societe(id),
+  annee INTEGER NOT NULL,
+  mois INTEGER NOT NULL,
+  date_creation DATE NOT NULL DEFAULT CURRENT_DATE,
+  total_theorique DECIMAL(15,2) NOT NULL DEFAULT 0,
+  total_paye DECIMAL(15,2) NOT NULL DEFAULT 0,
+  CONSTRAINT uk_facture_pub UNIQUE (id_societe, annee, mois)
+);
+
+-- 2) Lignes de facture (par vol_programmation)
+CREATE TABLE facture_pub_ligne (
+  id SERIAL PRIMARY KEY,
+  id_facture_pub INTEGER NOT NULL REFERENCES facture_pub(id) ON DELETE CASCADE,
+  id_vol_programmation INTEGER NOT NULL REFERENCES vol_programmation(id),
+  nb_diffusions INTEGER NOT NULL,
+  prix_unitaire DECIMAL(15,2) NOT NULL,
+  montant_theorique DECIMAL(15,2) NOT NULL,
+  montant_paye DECIMAL(15,2) NOT NULL DEFAULT 0,
+  CONSTRAINT uk_facture_pub_ligne UNIQUE (id_facture_pub, id_vol_programmation)
+);
+
+-- 3) Paiement (lié à une facture mensuelle)
+-- NB: id_facture_pub est NULLABLE pour rester compatible avec d'anciens paiements
+CREATE TABLE paiement_pub (
+  id SERIAL PRIMARY KEY,
+  id_societe INTEGER NOT NULL REFERENCES societe(id),
+  id_facture_pub INTEGER REFERENCES facture_pub(id),
+  date_paiement DATE NOT NULL,
+  montant DECIMAL(15,2) NOT NULL,
+  date_saisie TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT ck_paiement_pub_montant CHECK (montant > 0)
+);
+
+-- 4) Détails d'affectation paiement -> ligne de facture
+CREATE TABLE paiement_pub_affectation (
+  id SERIAL PRIMARY KEY,
+  id_paiement_pub INTEGER NOT NULL REFERENCES paiement_pub(id) ON DELETE CASCADE,
+  id_facture_pub_ligne INTEGER NOT NULL REFERENCES facture_pub_ligne(id) ON DELETE CASCADE,
+  montant_affecte DECIMAL(15,2) NOT NULL,
+  CONSTRAINT uk_paiement_pub_affectation UNIQUE (id_paiement_pub, id_facture_pub_ligne)
+);
+
  -- Ajuste les séquences (pour éviter collision si tu ajoutes ensuite des lignes sans spécifier id)
  SELECT setval(pg_get_serial_sequence('avion', 'id'), (SELECT COALESCE(MAX(id), 1) FROM avion), true);
  SELECT setval(pg_get_serial_sequence('aeroport', 'id'), (SELECT COALESCE(MAX(id), 1) FROM aeroport), true);
@@ -286,6 +339,7 @@ DROP TABLE IF EXISTS
  SELECT setval(pg_get_serial_sequence('statut_reservation', 'id'), (SELECT COALESCE(MAX(id), 1) FROM statut_reservation), true);
  SELECT setval(pg_get_serial_sequence('tarif_vol', 'id'), (SELECT COALESCE(MAX(id), 1) FROM tarif_vol), true);
  SELECT setval(pg_get_serial_sequence('societe', 'id'), (SELECT COALESCE(MAX(id), 1) FROM societe), true);
+ SELECT setval(pg_get_serial_sequence('paiement_pub', 'id'), (SELECT COALESCE(MAX(id), 1) FROM paiement_pub), true);
  SELECT setval(pg_get_serial_sequence('video_publicitaire', 'id'), (SELECT COALESCE(MAX(id), 1) FROM video_publicitaire), true);
  SELECT setval(pg_get_serial_sequence('tarif_diffusion_pub', 'id'), (SELECT COALESCE(MAX(id), 1) FROM tarif_diffusion_pub), true);
  SELECT setval(pg_get_serial_sequence('diffusion_pub', 'id'), (SELECT COALESCE(MAX(id), 1) FROM diffusion_pub), true);

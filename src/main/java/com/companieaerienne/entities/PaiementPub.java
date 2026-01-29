@@ -23,6 +23,10 @@ public class PaiementPub {
     @JoinColumn(name = "id_societe")
     private Societe societe;
 
+    @ManyToOne
+    @JoinColumn(name = "id_facture_pub")
+    private FacturePub facturePub;
+
     @Column(name = "date_paiement", nullable = false)
     private LocalDate datePaiement;
 

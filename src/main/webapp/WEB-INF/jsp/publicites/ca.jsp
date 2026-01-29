@@ -10,6 +10,12 @@
     </h1>
     <div class="text-muted">Sélectionne un mois pour calculer le chiffre d'affaires issu des diffusions publicitaires.</div>
   </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-primary" href="/publicites/paiements/new">
+      <i class="bi bi-cash-coin me-1"></i>
+      Enregistrer un paiement
+    </a>
+  </div>
 </div>
 
 <div class="card mb-3">

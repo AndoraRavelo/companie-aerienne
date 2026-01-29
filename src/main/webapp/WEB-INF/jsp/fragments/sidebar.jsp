@@ -33,6 +33,13 @@
     </a>
   </li>
 
+  <li class="nav-item">
+    <a class="nav-link ${uri.startsWith('/chiffre-affaire') ? 'active' : ''}" href="/chiffre-affaire">
+      <i class="bi bi-graph-up"></i>
+      <span>Chiffre d'affaire</span>
+    </a>
+  </li>
+
   <div class="sidebar-sep my-2"></div>
 
   <li class="nav-item">
@@ -48,9 +55,15 @@
     </a>
   </li>
   <li class="nav-item">
-    <a class="nav-link ${uri.startsWith('/publicites') ? 'active' : ''}" href="/publicites/ca">
+    <a class="nav-link ${uri.startsWith('/publicites/ca') ? 'active' : ''}" href="/publicites/ca">
       <i class="bi bi-megaphone"></i>
       <span>Publicités</span>
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link ${uri.startsWith('/publicites/paiements') ? 'active' : ''}" href="/publicites/paiements/new">
+      <i class="bi bi-cash-coin"></i>
+      <span>Paiements pubs</span>
     </a>
   </li>
   <!-- <li class="nav-item"><a class="nav-link" href="/tarifs">Tarifs</a></li> -->
